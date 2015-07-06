@@ -1,59 +1,39 @@
-*.class
+*.pydevproject
+.metadata
+.gradle
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Eclipse Core
+.project
 
-# Package Files #
-*.jar
-*.war
-*.ear
+# External tool builders
+.externalToolBuilders/
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+# Locally stored "Eclipse launch configurations"
+*.launch
 
-# =========================
-# Operating System Files
-# =========================
+# CDT-specific
+.cproject
 
-# OSX
-# =========================
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
 
-.DS_Store
-.AppleDouble
-.LSOverride
+# Java annotation processor (APT)
+.factorypath
 
-# Thumbnails
-._*
+# PDT-specific
+.buildpath
 
-# Files that might appear on external disk
-.Spotlight-V100
-.Trashes
+# sbteclipse plugin
+.target
 
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# Windows
-# =========================
-
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
-
-# Folder config file
-Desktop.ini
-
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Windows shortcuts
-*.lnk
+# TeXlipse plugin
+.texlipse
