@@ -19,9 +19,12 @@ public class ScreenCaptureController {
 	private ImagePanel imagePanel;
 	private MainFrame mainFrame;
 	private boolean capturing;
+	private GazeController gazeController;
 	
 	
-	public ScreenCaptureController() {
+	public ScreenCaptureController(GazeController gazeController) {
+		
+		this.gazeController = gazeController;
 		this.mainFrame = new MainFrame();
 		this.imagePanel = new ImagePanel();
 		mainFrame.add(imagePanel, BorderLayout.CENTER);
@@ -38,6 +41,7 @@ public class ScreenCaptureController {
 		BufferedImage capture = null;
 		try {
 			capture = new Robot().createScreenCapture(screenRect);
+			gazeController.addCurrentEyePosition(capture);
 			//ImageIO.write(capture, "bmp", new File("screenshot.png"));
 		} 
 		catch ( AWTException e) {
@@ -80,6 +84,9 @@ public class ScreenCaptureController {
 	}
 	
 	public static void main(String args[]) {
-		ScreenCaptureController scc = new ScreenCaptureController();
+		
+		//MovieController mc = new MovieController();
+		GazeController gc = new GazeController();
+		ScreenCaptureController scc = new ScreenCaptureController(gc);
 	}
 }
