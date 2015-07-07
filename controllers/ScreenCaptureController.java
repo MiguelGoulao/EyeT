@@ -1,21 +1,26 @@
 package controllers;
 
 import java.awt.AWTException;
-import java.awt.BorderLayout;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.MouseInfo;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.imageio.ImageIO;
 
 import views.ImagePanel;
 import views.MainFrame;
 
 public class ScreenCaptureController {
 	
-	private static final double FRAME_RATE = 24;
+	private static final int FRAME_RATE = 24;
 	
 	private ImagePanel imagePanel;
 	private MainFrame mainFrame;
@@ -45,7 +50,6 @@ public class ScreenCaptureController {
 		BufferedImage capture = null;
 		try {
 			capture = new Robot().createScreenCapture(screenRect);
-			gazeController.addCurrentEyePosition(capture);
 			//ImageIO.write(capture, "bmp", new File("screenshot.png"));
 		} 
 		catch ( AWTException e) {
@@ -77,12 +81,13 @@ public class ScreenCaptureController {
 
 				//imagePanel.setImage(captureScreen());
 				BufferedImage screenshot = captureScreen();
-				gazeController.addCurrentEyePosition(captureScreen());
+				gazeController.addCursor(screenshot);
+				gazeController.addCurrentEyePosition(screenshot);
 				
 				movieController.encodeImage(screenshot);
 
 				try {
-					Thread.sleep(30);
+					Thread.sleep(FRAME_RATE);
 				} 
 				catch (InterruptedException e) {
 					e.printStackTrace();
@@ -110,16 +115,13 @@ public class ScreenCaptureController {
 	}
 
 	public static void main(String args[]) {
-		
-		//MovieController mc = new MovieController();
 		GazeController gc = new GazeController();
 		MovieController mc = new MovieController();
 		ScreenCaptureController scc = new ScreenCaptureController(gc, mc);
 		
 		try {
-			Thread.sleep(10000);
+			Thread.sleep(24000);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		scc.setCapturing(false);
