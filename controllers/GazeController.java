@@ -25,8 +25,6 @@ public class GazeController {
 	public GazeController() {
 		final GazeManager gm = GazeManager.getInstance();
        	gm.activate(ApiVersion.VERSION_1_0, ClientMode.PUSH);
-       	
-       	startRecording();
         
         final GazeListener gazeListener = new GazeListener();
         gm.addGazeListener(gazeListener);
@@ -58,19 +56,15 @@ public class GazeController {
 		if(lastGaze != null) {
 			Graphics2D g2d = img.createGraphics();
 			g2d.setColor(Color.GREEN);
-			g2d.fillOval((int) lastGaze.smoothedCoordinates.x, (int) lastGaze.smoothedCoordinates.x, 10, 10);
+			System.out.println("drawing "+ (int) lastGaze.smoothedCoordinates.x + " " + (int) lastGaze.smoothedCoordinates.y);
+			g2d.fillOval((int) lastGaze.smoothedCoordinates.x, (int) lastGaze.smoothedCoordinates.y, 50, 50);
 			g2d.dispose();
 		}
     }
     
-    public void startRecording() {
-    	try
-    	{
-    		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH;mm;ss");
-    		Date date = new Date();
-    		
-    		String outputFileName = "recording " + dateFormat.format(date) + ".csv";
-    	    outputFileWriter = new FileWriter(outputFileName);  	    
+    public void startRecording(String filename) {
+    	try {
+    	    outputFileWriter = new FileWriter(filename + ".csv");  	    
     	    
     	    outputFileWriter.append("Time Stamp");
     	    outputFileWriter.append(';');

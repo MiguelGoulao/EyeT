@@ -6,26 +6,34 @@ import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import views.ImagePanel;
 import views.MainFrame;
 
 public class ScreenCaptureController {
 	
+	private static final double FRAME_RATE = 24;
+	
 	private ImagePanel imagePanel;
 	private MainFrame mainFrame;
 	private boolean capturing;
 	private GazeController gazeController;
+	private MovieController movieController;
 	
-	
-	public ScreenCaptureController(GazeController gazeController) {
+	public ScreenCaptureController(GazeController gazeController, MovieController movieController) {
 		
 		this.gazeController = gazeController;
+		this.movieController = movieController;
+		
+		/*
 		this.mainFrame = new MainFrame();
 		this.imagePanel = new ImagePanel();
 		mainFrame.add(imagePanel, BorderLayout.CENTER);
 		mainFrame.setVisible(true);
-		
+		*/
 		CaptureLoop captureLoop = new CaptureLoop();
 		captureLoop.start();
 		
@@ -46,7 +54,7 @@ public class ScreenCaptureController {
 		return capture;
 	}
 	
-	public void setImage(BufferedImage img) {
+	private void setImage(BufferedImage img) {
 		
 		imagePanel.setImage(img);
 		mainFrame.pack();
@@ -62,27 +70,59 @@ public class ScreenCaptureController {
 		@Override
 		public void run() {
 			
+			movieController.startRecording("recording " + getCurrentTime());
+			gazeController.startRecording("recording " + getCurrentTime());
+			
 			while(capturing) {
-				startTime = System.nanoTime();
-				imagePanel.setImage(captureScreen());
-				endTime = System.nanoTime();
-				duration = endTime - startTime;
-				System.out.println(duration / 1000000);
-				/*
+
+				//imagePanel.setImage(captureScreen());
+				BufferedImage screenshot = captureScreen();
+				gazeController.addCurrentEyePosition(captureScreen());
+				
+				movieController.encodeImage(screenshot);
+
 				try {
 					Thread.sleep(30);
 				} 
 				catch (InterruptedException e) {
 					e.printStackTrace();
-				}*/
+				}
 			}
+			
+			movieController.endRecording();
+			gazeController.endRecording();
 		}
 	}
 	
+	private String getCurrentTime() {
+		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH;mm;ss");
+		Date date = new Date();
+		
+		return dateFormat.format(date);
+	}
+	
+	public boolean isCapturing() {
+		return capturing;
+	}
+
+	public void setCapturing(boolean capturing) {
+		this.capturing = capturing;
+	}
+
 	public static void main(String args[]) {
 		
 		//MovieController mc = new MovieController();
 		GazeController gc = new GazeController();
-		ScreenCaptureController scc = new ScreenCaptureController(gc);
+		MovieController mc = new MovieController();
+		ScreenCaptureController scc = new ScreenCaptureController(gc, mc);
+		
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		scc.setCapturing(false);
 	}
+	
 }
