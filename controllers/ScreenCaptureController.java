@@ -95,7 +95,7 @@ public class ScreenCaptureController {
 	}
 	
 	private String getCurrentTime() {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH;mm;ss");
+		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH'h'mm'm'ss's'");
 		Date date = new Date();
 		
 		return dateFormat.format(date);
