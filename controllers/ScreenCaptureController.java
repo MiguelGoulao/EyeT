@@ -1,6 +1,7 @@
 package controllers;
 
 import java.awt.AWTException;
+import java.awt.BorderLayout;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MouseInfo;
@@ -14,35 +15,46 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.imageio.ImageIO;
+import javax.swing.JPanel;
 
-import views.ImagePanel;
+import views.ActionToolBar;
 import views.MainFrame;
+import views.TopMenu;
 
 public class ScreenCaptureController {
 	
 	private static final int FRAME_RATE = 60;
-	
-	private ImagePanel imagePanel;
+
 	private MainFrame mainFrame;
-	private boolean capturing;
+	private boolean recording;
 	private GazeController gazeController;
 	private MovieController movieController;
+	
+	private CaptureLoop captureLoop;
+	private boolean paused;
+	private long pauseStart;
+	private long pausedTime;
+	
+	private String workingDirectory = "E:\\";
 	
 	public ScreenCaptureController(GazeController gazeController, MovieController movieController) {
 		
 		this.gazeController = gazeController;
 		this.movieController = movieController;
+		this.paused = false;
 		
-		/*
 		this.mainFrame = new MainFrame();
-		this.imagePanel = new ImagePanel();
-		mainFrame.add(imagePanel, BorderLayout.CENTER);
+		TopMenu topMenu = new TopMenu(this);
+		mainFrame.add(topMenu, BorderLayout.NORTH);
+		JPanel middlePanel = new JPanel();
+		middlePanel.setLayout(new BorderLayout());
+		mainFrame.add(middlePanel, BorderLayout.CENTER);
+		ActionToolBar toolbar = new ActionToolBar(this);
+		middlePanel.add(toolbar, BorderLayout.NORTH);
 		mainFrame.setVisible(true);
-		*/
-		CaptureLoop captureLoop = new CaptureLoop();
-		captureLoop.start();
+		mainFrame.pack();
 		
-		capturing = true;
+		recording = false;
 	}
 	
 	public BufferedImage captureScreen() {
@@ -50,7 +62,6 @@ public class ScreenCaptureController {
 		BufferedImage capture = null;
 		try {
 			capture = new Robot().createScreenCapture(screenRect);
-			//ImageIO.write(capture, "bmp", new File("screenshot.png"));
 		} 
 		catch ( AWTException e) {
 			e.printStackTrace();
@@ -58,33 +69,64 @@ public class ScreenCaptureController {
 		return capture;
 	}
 	
-	private void setImage(BufferedImage img) {
-		
-		imagePanel.setImage(img);
-		mainFrame.pack();
-		//mainFrame.setSize(new Dimension(img.getWidth(), img.getHeight() + topMenu.getHeight()));
+	public void startRecording() {
+		if(!recording) {
+			if(!paused) {
+				pausedTime = 0;
+				String currentTime = getCurrentTime();
+				movieController.startRecording(workingDirectory + "\\" + currentTime);
+				gazeController.startRecording(workingDirectory + "\\" + currentTime);
+			}
+			else {
+				pausedTime += System.nanoTime() - pauseStart;
+				paused = false;
+			}
+			
+			recording = true;
+			
+			captureLoop = new CaptureLoop();
+			captureLoop.start();
+
+		}	
+	}
+	
+	public void pauseRecording() {
+		if(recording) {
+			recording = false;
+			paused = true;
+			pauseStart = System.nanoTime();
+			
+			gazeController.pauseRecording();
+		}
+	}
+	
+	public void endRecording() {
+		if(recording || paused) {
+			recording = false;
+			
+			try {
+				captureLoop.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			movieController.endRecording();
+			gazeController.endRecording();
+		}	
 	}
 	
 	private class CaptureLoop extends Thread {
 
-		private long startTime;
-		private long endTime;
-		private long duration;
-		
 		@Override
 		public void run() {
-			
-			movieController.startRecording("recording " + getCurrentTime());
-			gazeController.startRecording("recording " + getCurrentTime());
-			
-			while(capturing) {
-
-				//imagePanel.setImage(captureScreen());
+			while(recording) {
+				
 				BufferedImage screenshot = captureScreen();
 				gazeController.addCursor(screenshot);
 				gazeController.addCurrentEyePosition(screenshot);
 				
-				movieController.encodeImage(screenshot);
+				movieController.encodeImage(screenshot, pausedTime);
 
 				try {
 					Thread.sleep(FRAME_RATE);
@@ -94,8 +136,6 @@ public class ScreenCaptureController {
 				}
 			}
 			
-			movieController.endRecording();
-			gazeController.endRecording();
 		}
 	}
 	
@@ -107,24 +147,25 @@ public class ScreenCaptureController {
 	}
 	
 	public boolean isCapturing() {
-		return capturing;
+		return recording;
 	}
 
-	public void setCapturing(boolean capturing) {
-		this.capturing = capturing;
+	public void setCapturing(boolean recording) {
+		this.recording = recording;
+	}
+
+	public String getWorkingDirectory() {
+		return workingDirectory;
+	}
+
+	public void setWorkingDirectory(String workingDirectory) {
+		this.workingDirectory = workingDirectory;
 	}
 
 	public static void main(String args[]) {
 		GazeController gc = new GazeController();
 		MovieController mc = new MovieController();
 		ScreenCaptureController scc = new ScreenCaptureController(gc, mc);
-		
-		try {
-			Thread.sleep(24000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		scc.setCapturing(false);
 	}
 	
 }

@@ -55,18 +55,21 @@ public class GazeController {
 	}
 
 	public void addCurrentEyePosition(BufferedImage img) {
-		double x = lastGaze.smoothedCoordinates.x ;
-		double y = lastGaze.smoothedCoordinates.y; 
-		if (lastGaze != null && x != 0 && y != 0) {
-			Graphics2D g2d = img.createGraphics();
-			g2d.setColor(Color.GREEN);
-			System.out.println("drawing "
-					+ (int) x + " "
-					+ (int) y);
-			g2d.fillOval((int) x,
-					(int) y, 30, 30);
-			g2d.dispose();
+		if(lastGaze != null) {
+			double x = lastGaze.smoothedCoordinates.x ;
+			double y = lastGaze.smoothedCoordinates.y; 
+			if (lastGaze != null && x != 0 && y != 0) {
+				Graphics2D g2d = img.createGraphics();
+				g2d.setColor(Color.GREEN);
+				System.out.println("drawing "
+						+ (int) x + " "
+						+ (int) y);
+				g2d.fillOval((int) x,
+						(int) y, 30, 30);
+				g2d.dispose();
+			}
 		}
+		
 	}
 
 	public void addCursor(BufferedImage img) {
@@ -74,13 +77,11 @@ public class GazeController {
 		int x = MouseInfo.getPointerInfo().getLocation().x;
 		int y = MouseInfo.getPointerInfo().getLocation().y;
 		try {
-			cursor = ImageIO.read(new File("cursor.png"));
-//					"C:\\Users\\Arkadiusz\\Desktop\\EYETT\\cursor.png"));
+			cursor = ImageIO.read(getClass().getResource("/resources/cursor.png"));
 			Graphics2D g2d = img.createGraphics();
 			img.createGraphics().drawImage(cursor, x, y, 16, 16, null);
 			g2d.dispose();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -132,5 +133,9 @@ public class GazeController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public void pauseRecording() {
+		recording = !recording;
 	}
 }

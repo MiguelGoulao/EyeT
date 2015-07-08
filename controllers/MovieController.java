@@ -34,13 +34,13 @@ public class MovieController {
     	recordingStartTime = System.nanoTime();
     }
 
-	public void encodeImage(BufferedImage img) {
+	public void encodeImage(BufferedImage img, long pausedTime) {
 		
 		// convert to the right image type
 		BufferedImage bgrImage = convertToType(img, BufferedImage.TYPE_3BYTE_BGR);
 					
 		// encode the image to stream #0
-		writer.encodeVideo(0, bgrImage, System.nanoTime() - recordingStartTime, TimeUnit.NANOSECONDS);
+		writer.encodeVideo(0, bgrImage, System.nanoTime() - recordingStartTime - pausedTime, TimeUnit.NANOSECONDS);
 	}
 	
 	public void endRecording() {
