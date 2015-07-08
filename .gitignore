@@ -41,3 +41,4 @@ local.properties
 # Custom
 *.csv
 *.mp4
+*.class
