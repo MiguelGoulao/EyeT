@@ -20,7 +20,7 @@ import views.MainFrame;
 
 public class ScreenCaptureController {
 	
-	private static final int FRAME_RATE = 24;
+	private static final int FRAME_RATE = 60;
 	
 	private ImagePanel imagePanel;
 	private MainFrame mainFrame;
