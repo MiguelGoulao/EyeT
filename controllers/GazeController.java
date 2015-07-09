@@ -7,11 +7,9 @@ import java.awt.Image;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -24,10 +22,10 @@ import com.theeyetribe.client.data.GazeData;
 
 public class GazeController {
 
-	private static final int BASE_DIAMETER = 30;
-	private static final int MAX_DIAMETER = 50;
+	private static final int BASE_DIAMETER = 10;
+	private static final int MAX_DIAMETER = 25;
 
-	public static final int SACCADE_RANGE = 80;
+	// public static final int SACCADE_RANGE = 80;
 	private static final int GAZES_NUMBER = 3;
 
 	private List<GazeData> lastNGazes;
@@ -59,41 +57,26 @@ public class GazeController {
 		public void onGazeUpdate(GazeData gazeData) {
 			if (recording) {
 				saveData(gazeData);
-				//System.out.println(gazeData.smoothedCoordinates.x + " " + gazeData.smoothedCoordinates.y);
+				// System.out.println(gazeData.smoothedCoordinates.x + " " +
+				// gazeData.smoothedCoordinates.y);
 			}
 		}
 	}
 
 	private void add(GazeData gaze) {
-		boolean newFixated = isLastSaccade() && gaze.isFixated;
-		if (isSaccade(gaze) || newFixated || lastNGazes.isEmpty()) {
-
-			if (lastNGazes.size() == GAZES_NUMBER)
+		if (isLastFixated() || lastNGazes.size() == GAZES_NUMBER) {
+			if (gaze.isFixated)
+				lastNGazes.remove(lastNGazes.size() - 1);
+			else
 				lastNGazes.remove(0);
-
-			lastNGazes.add(gaze);
-			//System.out.println("Added: " + gaze.timeStampString);
 		}
+		lastNGazes.add(gaze);
+		// System.out.println("Added: " + gaze.timeStampString);
 	}
 
-	private boolean isSaccade(GazeData gaze) {
-		return !gaze.isFixated && !inRange(gaze);
-	}
-
-	private boolean isLastSaccade() {
+	private boolean isLastFixated() {
 		GazeData last = getLatest();
-		return last != null && !last.isFixated;
-	}
-
-	private boolean inRange(GazeData gaze) {
-		GazeData last = getLatest();
-		if (last == null)
-			return true;
-
-		return Point.distance(last.smoothedCoordinates.x,
-				last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
-				gaze.smoothedCoordinates.y) <= SACCADE_RANGE;
-
+		return last != null && last.isFixated;
 	}
 
 	private GazeData getLatest() {
@@ -123,7 +106,7 @@ public class GazeController {
 
 			markLatestGazes();
 
-			if (atLeastTwoGaze())
+			if (atLeastTwoGazes())
 				markSaccadesPaths(img);
 
 			marker.dispose();
@@ -131,7 +114,7 @@ public class GazeController {
 		}
 	}
 
-	private boolean atLeastTwoGaze() {
+	private boolean atLeastTwoGazes() {
 		return lastNGazes.size() >= 2;
 	}
 
@@ -169,8 +152,10 @@ public class GazeController {
 			GazeData gA = lastNGazes.get(i);
 			GazeData gB = lastNGazes.get(i + 1);
 
-			g2d.drawLine((int) gA.rawCoordinates.x, (int) gA.rawCoordinates.y,
-					(int) gB.rawCoordinates.x, (int) gB.rawCoordinates.y);
+			g2d.drawLine((int) gA.smoothedCoordinates.x,
+					(int) gA.smoothedCoordinates.y,
+					(int) gB.smoothedCoordinates.x,
+					(int) gB.smoothedCoordinates.y);
 		}
 		g2d.dispose();
 	}
@@ -211,6 +196,7 @@ public class GazeController {
 	}
 
 	private void saveData(GazeData gazeData) {
+		System.out.println("is fixed: " + gazeData.isFixated);
 		add(gazeData);
 		try {
 			outputFileWriter.append(gazeData.timeStampString);

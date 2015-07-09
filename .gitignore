@@ -42,3 +42,4 @@ local.properties
 *.csv
 *.mp4
 *.class
+settings.txt
