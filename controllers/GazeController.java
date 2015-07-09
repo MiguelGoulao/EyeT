@@ -1,9 +1,11 @@
 package controllers;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
@@ -23,7 +25,9 @@ import com.theeyetribe.client.data.GazeData;
 public class GazeController {
 
 	private static final int BASE_DIAMETER = 30;
-	public static final int FIXATION_RANGE = 15;
+	private static final int MAX_DIAMETER = 50;
+	
+	public static final int SACCADE_RANGE = 80;
 	private static final int GAZES_NUMBER = 3;
 
 	private List<GazeData> lastNGazes;
@@ -61,8 +65,9 @@ public class GazeController {
 		}
 	}
 
-	public void addIfSaccadeOrFirstLook(GazeData gaze) {
-		if (!gaze.isFixated || currentLastIsSaccade() || lastNGazes.isEmpty()) {
+	private void add(GazeData gaze) {
+		boolean newFixated = lastIsSaccade()  && gaze.isFixated;
+		if (isSaccade(gaze) || newFixated || lastNGazes.isEmpty()) {
 
 			if (lastNGazes.size() == GAZES_NUMBER)
 				lastNGazes.remove(0);
@@ -72,22 +77,38 @@ public class GazeController {
 		}
 	}
 
-	private boolean currentLastIsSaccade() {
+	private boolean isSaccade(GazeData gaze) {
+		return !gaze.isFixated && !inRange(gaze);
+	}
+
+	private boolean lastIsSaccade() {
 		GazeData last = getLatest();
 		return last != null && !last.isFixated;
 	}
 
-	public GazeData getLatest() {
-		return lastNGazes.get(lastNGazes.size() - 1);
+	private boolean inRange(GazeData gaze) {
+		GazeData last = getLatest();
+		if (last == null)
+			return true;
+
+		return Point.distance(last.smoothedCoordinates.x,
+				last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
+				gaze.smoothedCoordinates.y) <= SACCADE_RANGE;
+
 	}
 
-	public boolean isLooking() {
+	private GazeData getLatest() {
+		int index = lastNGazes.size() - 1;
+		return index >= 0 ? lastNGazes.get(index) : null;
+	}
+
+	private boolean isLooking() {
 		GazeData gaze = getLatest();
 		return gaze != null && gaze.smoothedCoordinates.x != 0
 				&& gaze.smoothedCoordinates.y != 0;
 	}
 
-	public boolean isFixed() {
+	private boolean isFixed() {
 		GazeData gaze = getLatest();
 		return gaze != null && gaze.isFixated;
 	}
@@ -95,7 +116,7 @@ public class GazeController {
 	public void addCurrentEyePosition(BufferedImage img) {
 		if (isLooking()) {
 			marker = img.createGraphics();
-
+			marker.setStroke(new BasicStroke(3));
 			if (isFixed())
 				fixationsCounter++;
 			else
@@ -103,9 +124,15 @@ public class GazeController {
 
 			markLatestGazes();
 
-			// markSaccadesPaths(img);
+			if (atLeastTwoGaze())
+				 markSaccadesPaths(img);
+			
 			marker.dispose();
 		}
+	}
+
+	private boolean atLeastTwoGaze() {
+		return lastNGazes.size() >= 2;
 	}
 
 	public void markLatestGazes() {
@@ -114,46 +141,41 @@ public class GazeController {
 			double y = gaze.smoothedCoordinates.y;
 
 			int size = 0;
-			if (isLast(gaze) && gaze.isFixated) {
-				System.out.println("======fixed======");
-				size = BASE_DIAMETER + fixationsCounter;
+			if (isLast(gaze)) {
 				marker.setColor(Color.GREEN);
+				if (gaze.isFixated) {
+					size = BASE_DIAMETER + fixationsCounter;
+				}
 			} else {
 				size = BASE_DIAMETER;
-				marker.setColor(Color.YELLOW);
+				marker.setColor(Color.RED);
 			}
-			marker.fillOval((int) x, (int) y, size, size);
+			if(size <= MAX_DIAMETER)
+				marker.drawOval((int) x, (int) y, size, size);
+			else
+				marker.fillOval((int) x, (int) y, MAX_DIAMETER, MAX_DIAMETER);
 		}
 	}
 
 	public boolean isLast(GazeData gaze) {
-		System.out.println("index: " + lastNGazes.indexOf(gaze) + "is fixed: "
-				+ gaze.isFixated);
-		return lastNGazes.indexOf(gaze) == (GAZES_NUMBER - 1);
+		return lastNGazes.indexOf(gaze) == lastNGazes.size() - 1;
 	}
 
-	// public void markSaccadesPaths(BufferedImage img) {
-	// EyeMarker m1 = last3Gazes.get(0);
-	// EyeMarker m2 = null;
-	// EyeMarker m3 = null;
-	// if (last3Gazes.size() >= 2)
-	// m2 = last3Gazes.get(1);
-	// if (last3Gazes.size() >= 3)
-	// m3 = last3Gazes.get(2);
-	//
-	// Graphics2D g2d = img.createGraphics();
-	// g2d.setColor(Color.BLUE);
-	//
-	// if (m2 != null) {
-	// g2d.drawLine((int) m1.getX(), (int) m1.getY(), (int) m2.getX(),
-	// (int) m2.getY());
-	// if (m3 != null)
-	// g2d.drawLine((int) m2.getX(), (int) m2.getY(), (int) m3.getX(),
-	// (int) m3.getY());
-	// }
-	//
-	// g2d.dispose();
-	// }
+	public void markSaccadesPaths(BufferedImage img) {
+		Graphics2D g2d = img.createGraphics();
+		g2d.setColor(Color.BLUE);
+
+		for (int i = 0; i < lastNGazes.size() - 1; i++) {
+			GazeData gA = lastNGazes.get(i);
+			GazeData gB = lastNGazes.get(i + 1);
+
+			g2d.drawLine((int) gA.rawCoordinates.x,
+					(int) gA.rawCoordinates.y,
+					(int) gB.rawCoordinates.x,
+					(int) gB.rawCoordinates.y);
+		}
+		g2d.dispose();
+	}
 
 	public void addCursor(BufferedImage img) {
 		Image cursor;
@@ -190,7 +212,7 @@ public class GazeController {
 	}
 
 	private void saveData(GazeData gazeData) {
-		addIfSaccadeOrFirstLook(gazeData);
+		add(gazeData);
 		try {
 			outputFileWriter.append(gazeData.timeStampString);
 			outputFileWriter.append(';');
