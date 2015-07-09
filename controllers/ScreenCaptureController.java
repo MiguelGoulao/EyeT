@@ -10,9 +10,12 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -56,6 +59,7 @@ public class ScreenCaptureController {
 		mainFrame.pack();
 
 		recording = false;
+		loadSettings();
 	}
 
 	public BufferedImage captureScreen() {
@@ -109,7 +113,6 @@ public class ScreenCaptureController {
 			try {
 				captureLoop.join();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -129,14 +132,14 @@ public class ScreenCaptureController {
 				gazeController.addCurrentEyePosition(screenshot);
 
 				movieController.encodeImage(screenshot, pausedTime);
-
+				
 				try {
 					Thread.sleep(FRAME_RATE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+				
 			}
-
 		}
 	}
 
@@ -162,6 +165,39 @@ public class ScreenCaptureController {
 
 	public void setWorkingDirectory(String workingDirectory) {
 		this.workingDirectory = workingDirectory;
+		saveSettings();
+	}
+	
+	public void loadSettings() {
+		File file = new File("settings.txt");
+		
+		if(file.exists() && ! file.isDirectory()) {
+			try {
+				Scanner scanner = new Scanner(file);
+				while(scanner.hasNext()) {
+					if(scanner.next().equals("workingDirectory")) {
+						scanner.next();
+						workingDirectory = scanner.next();
+					}
+				}
+				scanner.close();
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
+		}
+	}
+	
+	public void saveSettings() {
+		File file = new File("settings.txt");
+		try{
+			FileWriter fw = new FileWriter(file, false);
+			fw.write("workingDirectory = " + workingDirectory);
+			fw.close();
+		}
+		catch( IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String args[]) {

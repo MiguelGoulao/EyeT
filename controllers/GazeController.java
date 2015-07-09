@@ -59,21 +59,20 @@ public class GazeController {
 		public void onGazeUpdate(GazeData gazeData) {
 			if (recording) {
 				saveData(gazeData);
-				System.out.println(gazeData.smoothedCoordinates.x + " "
-						+ gazeData.smoothedCoordinates.y);
+				//System.out.println(gazeData.smoothedCoordinates.x + " " + gazeData.smoothedCoordinates.y);
 			}
 		}
 	}
 
 	private void add(GazeData gaze) {
-		boolean newFixated = lastIsSaccade() && gaze.isFixated;
+		boolean newFixated = isLastSaccade() && gaze.isFixated;
 		if (isSaccade(gaze) || newFixated || lastNGazes.isEmpty()) {
 
 			if (lastNGazes.size() == GAZES_NUMBER)
 				lastNGazes.remove(0);
 
 			lastNGazes.add(gaze);
-			System.out.println("Added: " + gaze.timeStampString);
+			//System.out.println("Added: " + gaze.timeStampString);
 		}
 	}
 
@@ -81,7 +80,7 @@ public class GazeController {
 		return !gaze.isFixated && !inRange(gaze);
 	}
 
-	private boolean lastIsSaccade() {
+	private boolean isLastSaccade() {
 		GazeData last = getLatest();
 		return last != null && !last.isFixated;
 	}
@@ -128,6 +127,7 @@ public class GazeController {
 				markSaccadesPaths(img);
 
 			marker.dispose();
+			System.out.println(System.currentTimeMillis());
 		}
 	}
 
