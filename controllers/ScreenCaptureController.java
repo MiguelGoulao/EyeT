@@ -22,27 +22,28 @@ import views.MainFrame;
 import views.TopMenu;
 
 public class ScreenCaptureController {
-	
+
 	private static final int FRAME_RATE = 60;
 
 	private MainFrame mainFrame;
 	private boolean recording;
 	private GazeController gazeController;
 	private MovieController movieController;
-	
+
 	private CaptureLoop captureLoop;
 	private boolean paused;
 	private long pauseStart;
 	private long pausedTime;
-	
+
 	private String workingDirectory = "E:\\";
-	
-	public ScreenCaptureController(GazeController gazeController, MovieController movieController) {
-		
+
+	public ScreenCaptureController(GazeController gazeController,
+			MovieController movieController) {
+
 		this.gazeController = gazeController;
 		this.movieController = movieController;
 		this.paused = false;
-		
+
 		this.mainFrame = new MainFrame();
 		TopMenu topMenu = new TopMenu(this);
 		mainFrame.add(topMenu, BorderLayout.NORTH);
@@ -53,99 +54,100 @@ public class ScreenCaptureController {
 		middlePanel.add(toolbar, BorderLayout.NORTH);
 		mainFrame.setVisible(true);
 		mainFrame.pack();
-		
+
 		recording = false;
 	}
-	
+
 	public BufferedImage captureScreen() {
-		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
+				.getScreenSize());
 		BufferedImage capture = null;
 		try {
 			capture = new Robot().createScreenCapture(screenRect);
-		} 
-		catch ( AWTException e) {
+		} catch (AWTException e) {
 			e.printStackTrace();
 		}
 		return capture;
 	}
-	
+
 	public void startRecording() {
-		if(!recording) {
-			if(!paused) {
+		if (!recording) {
+			if (!paused) {
 				pausedTime = 0;
 				String currentTime = getCurrentTime();
-				movieController.startRecording(workingDirectory + "\\" + currentTime);
-				gazeController.startRecording(workingDirectory + "\\" + currentTime);
-			}
-			else {
+				movieController.startRecording(workingDirectory + "\\"
+						+ currentTime);
+				gazeController.startRecording(workingDirectory + "\\"
+						+ currentTime);
+			} else {
 				pausedTime += System.nanoTime() - pauseStart;
 				paused = false;
 			}
-			
+
 			recording = true;
-			
+
 			captureLoop = new CaptureLoop();
 			captureLoop.start();
 
-		}	
+		}
 	}
-	
+
 	public void pauseRecording() {
-		if(recording) {
+		if (recording) {
 			recording = false;
 			paused = true;
 			pauseStart = System.nanoTime();
-			
+
 			gazeController.pauseRecording();
 		}
 	}
-	
+
 	public void endRecording() {
-		if(recording || paused) {
+		if (recording || paused) {
 			recording = false;
-			
+
 			try {
 				captureLoop.join();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			movieController.endRecording();
 			gazeController.endRecording();
-		}	
+		}
 	}
-	
+
 	private class CaptureLoop extends Thread {
 
 		@Override
 		public void run() {
-			while(recording) {
-				
+			while (recording) {
+
 				BufferedImage screenshot = captureScreen();
 				gazeController.addCursor(screenshot);
 				gazeController.addCurrentEyePosition(screenshot);
-				
+
 				movieController.encodeImage(screenshot, pausedTime);
 
 				try {
 					Thread.sleep(FRAME_RATE);
-				} 
-				catch (InterruptedException e) {
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
-			
+
 		}
 	}
-	
+
 	private String getCurrentTime() {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH'h'mm'm'ss's'");
+		DateFormat dateFormat = new SimpleDateFormat(
+				"yyyy MM dd HH'h'mm'm'ss's'");
 		Date date = new Date();
-		
+
 		return dateFormat.format(date);
 	}
-	
+
 	public boolean isCapturing() {
 		return recording;
 	}
@@ -167,5 +169,5 @@ public class ScreenCaptureController {
 		MovieController mc = new MovieController();
 		ScreenCaptureController scc = new ScreenCaptureController(gc, mc);
 	}
-	
+
 }
