@@ -25,12 +25,16 @@ public class MovieController {
     
     public void startRecording(String filename) {
     	
-    	writer = ToolFactory.makeWriter(filename + ".mp4");
+    	writer = ToolFactory.makeWriter("C:\\" + "jojj.mp4");
     	
     	// We tell it we're going to add one video stream, with id 0,
 		// at position 0, and that it will have a fixed frame rate of FRAME_RATE.
-    	writer.addVideoStream(0, 0, ICodec.ID.CODEC_ID_MPEG4, screenBounds.width, screenBounds.height);
-    	
+    	try{
+    		writer.addVideoStream(0, 0, ICodec.ID.CODEC_ID_MPEG4, screenBounds.width, screenBounds.height);
+    	}
+    	catch(IllegalArgumentException e) {
+    		e.printStackTrace();
+    	}
     	recordingStartTime = System.nanoTime();
     }
 

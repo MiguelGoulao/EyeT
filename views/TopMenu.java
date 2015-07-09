@@ -72,8 +72,14 @@ public class TopMenu extends JMenuBar implements ActionListener{
 		
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
             File folder = fc.getSelectedFile();
+            if(folder.canWrite()) {
+            	controller.setWorkingDirectory(folder.toString());
+            }
+            else {
+            	controller.badDirectory();
+            }
             
-            controller.setWorkingDirectory(folder.toString());
+            
 		}
 	}
 

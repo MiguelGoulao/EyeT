@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import views.ActionToolBar;
@@ -38,7 +39,7 @@ public class ScreenCaptureController {
 	private long pauseStart;
 	private long pausedTime;
 
-	private String workingDirectory = "E:\\";
+	private String workingDirectory = "";
 
 	public ScreenCaptureController(GazeController gazeController,
 			MovieController movieController) {
@@ -79,10 +80,16 @@ public class ScreenCaptureController {
 			if (!paused) {
 				pausedTime = 0;
 				String currentTime = getCurrentTime();
-				movieController.startRecording(workingDirectory + "\\"
-						+ currentTime);
-				gazeController.startRecording(workingDirectory + "\\"
-						+ currentTime);
+				
+				if(workingDirectory.equals(null)){
+					movieController.startRecording(currentTime);
+					gazeController.startRecording(currentTime);
+				}
+				else {
+					movieController.startRecording(workingDirectory + "\\" + currentTime);
+					gazeController.startRecording(workingDirectory + "\\"  + currentTime);
+				}
+				
 			} else {
 				pausedTime += System.nanoTime() - pauseStart;
 				paused = false;
@@ -90,7 +97,7 @@ public class ScreenCaptureController {
 
 			recording = true;
 
-			captureLoop = new CaptureLoop();
+			captureLoop = new CaptureLoop(); 
 			captureLoop.start();
 
 		}
@@ -132,13 +139,13 @@ public class ScreenCaptureController {
 				gazeController.addCurrentEyePosition(screenshot);
 
 				movieController.encodeImage(screenshot, pausedTime);
-				
+				/*
 				try {
 					Thread.sleep(FRAME_RATE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				
+				*/
 			}
 		}
 	}
@@ -166,6 +173,10 @@ public class ScreenCaptureController {
 	public void setWorkingDirectory(String workingDirectory) {
 		this.workingDirectory = workingDirectory;
 		saveSettings();
+	}
+	
+	public void badDirectory() {
+		JOptionPane.showMessageDialog(mainFrame, "You have no authorization to write in this location");
 	}
 	
 	public void loadSettings() {
