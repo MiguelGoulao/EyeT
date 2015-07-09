@@ -8,23 +8,29 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import com.theeyetribe.client.GazeManager;
-import com.theeyetribe.client.IGazeListener;
 import com.theeyetribe.client.GazeManager.ApiVersion;
 import com.theeyetribe.client.GazeManager.ClientMode;
+import com.theeyetribe.client.IGazeListener;
 import com.theeyetribe.client.data.GazeData;
 
 public class GazeController {
 
+	private static final int BASE_DIAMETER = 30;
+	public static final int FIXATION_RANGE = 15;
+	private static final int GAZES_NUMBER = 3;
+
+	private List<GazeData> lastNGazes;
+	private int fixationsCounter = 0;
+	private Graphics2D marker;
 	private FileWriter outputFileWriter;
 	private boolean recording;
-	private GazeData lastGaze;
 
 	public GazeController() {
 		final GazeManager gm = GazeManager.getInstance();
@@ -40,10 +46,11 @@ public class GazeController {
 				gm.deactivate();
 			}
 		});
+
+		lastNGazes = new ArrayList<>(GAZES_NUMBER);
 	}
 
 	private class GazeListener implements IGazeListener {
-
 		@Override
 		public void onGazeUpdate(GazeData gazeData) {
 			if (recording) {
@@ -54,20 +61,99 @@ public class GazeController {
 		}
 	}
 
-	public void addCurrentEyePosition(BufferedImage img) {
-		double x = lastGaze.smoothedCoordinates.x ;
-		double y = lastGaze.smoothedCoordinates.y; 
-		if (lastGaze != null && x != 0 && y != 0) {
-			Graphics2D g2d = img.createGraphics();
-			g2d.setColor(Color.GREEN);
-			System.out.println("drawing "
-					+ (int) x + " "
-					+ (int) y);
-			g2d.fillOval((int) x,
-					(int) y, 30, 30);
-			g2d.dispose();
+	public void addIfSaccadeOrFirstLook(GazeData gaze) {
+		if (!gaze.isFixated || currentLastIsSaccade() || lastNGazes.isEmpty()) {
+
+			if (lastNGazes.size() == GAZES_NUMBER)
+				lastNGazes.remove(0);
+
+			lastNGazes.add(gaze);
+			System.out.println("Added: " + gaze.timeStampString);
 		}
 	}
+
+	private boolean currentLastIsSaccade() {
+		GazeData last = getLatest();
+		return last != null && !last.isFixated;
+	}
+
+	public GazeData getLatest() {
+		return lastNGazes.get(lastNGazes.size() - 1);
+	}
+
+	public boolean isLooking() {
+		GazeData gaze = getLatest();
+		return gaze != null && gaze.smoothedCoordinates.x != 0
+				&& gaze.smoothedCoordinates.y != 0;
+	}
+
+	public boolean isFixed() {
+		GazeData gaze = getLatest();
+		return gaze != null && gaze.isFixated;
+	}
+
+	public void addCurrentEyePosition(BufferedImage img) {
+		if (isLooking()) {
+			marker = img.createGraphics();
+
+			if (isFixed())
+				fixationsCounter++;
+			else
+				fixationsCounter = 0;
+
+			markLatestGazes();
+
+			// markSaccadesPaths(img);
+			marker.dispose();
+		}
+	}
+
+	public void markLatestGazes() {
+		for (GazeData gaze : lastNGazes) {
+			double x = gaze.smoothedCoordinates.x;
+			double y = gaze.smoothedCoordinates.y;
+
+			int size = 0;
+			if (isLast(gaze) && gaze.isFixated) {
+				System.out.println("======fixed======");
+				size = BASE_DIAMETER + fixationsCounter;
+				marker.setColor(Color.GREEN);
+			} else {
+				size = BASE_DIAMETER;
+				marker.setColor(Color.YELLOW);
+			}
+			marker.fillOval((int) x, (int) y, size, size);
+		}
+	}
+
+	public boolean isLast(GazeData gaze) {
+		System.out.println("index: " + lastNGazes.indexOf(gaze) + "is fixed: "
+				+ gaze.isFixated);
+		return lastNGazes.indexOf(gaze) == (GAZES_NUMBER - 1);
+	}
+
+	// public void markSaccadesPaths(BufferedImage img) {
+	// EyeMarker m1 = last3Gazes.get(0);
+	// EyeMarker m2 = null;
+	// EyeMarker m3 = null;
+	// if (last3Gazes.size() >= 2)
+	// m2 = last3Gazes.get(1);
+	// if (last3Gazes.size() >= 3)
+	// m3 = last3Gazes.get(2);
+	//
+	// Graphics2D g2d = img.createGraphics();
+	// g2d.setColor(Color.BLUE);
+	//
+	// if (m2 != null) {
+	// g2d.drawLine((int) m1.getX(), (int) m1.getY(), (int) m2.getX(),
+	// (int) m2.getY());
+	// if (m3 != null)
+	// g2d.drawLine((int) m2.getX(), (int) m2.getY(), (int) m3.getX(),
+	// (int) m3.getY());
+	// }
+	//
+	// g2d.dispose();
+	// }
 
 	public void addCursor(BufferedImage img) {
 		Image cursor;
@@ -75,7 +161,6 @@ public class GazeController {
 		int y = MouseInfo.getPointerInfo().getLocation().y;
 		try {
 			cursor = ImageIO.read(new File("cursor.png"));
-//					"C:\\Users\\Arkadiusz\\Desktop\\EYETT\\cursor.png"));
 			Graphics2D g2d = img.createGraphics();
 			img.createGraphics().drawImage(cursor, x, y, 16, 16, null);
 			g2d.dispose();
@@ -105,7 +190,7 @@ public class GazeController {
 	}
 
 	private void saveData(GazeData gazeData) {
-		lastGaze = gazeData;
+		addIfSaccadeOrFirstLook(gazeData);
 		try {
 			outputFileWriter.append(gazeData.timeStampString);
 			outputFileWriter.append(';');
