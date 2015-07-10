@@ -52,6 +52,13 @@ public class ScreenCaptureController {
 		loadSettings();
 		
 		buildWindows();
+		
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				endRecording();
+			}
+		});
 	}
 	
 	private void buildWindows() {
@@ -89,7 +96,7 @@ public class ScreenCaptureController {
 				pausedTime = 0;
 				String currentTime = getCurrentTime();
 				
-				if(workingDirectory.equals(null)){
+				if(workingDirectory == null){
 					movieController.startRecording(currentTime);
 					gazeController.startRecording(currentTime);
 				}
