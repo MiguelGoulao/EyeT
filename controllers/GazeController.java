@@ -167,10 +167,15 @@ public class GazeController {
 			GazeData gB = lastNGazes.get(i + 1);
 
 			if (isLooking(gA) && isLooking(gB)) {
-				marker.drawLine((int) gA.smoothedCoordinates.x + BASE_DIAMETER / 2,
-						(int) gA.smoothedCoordinates.y + BASE_DIAMETER / 2,
-						(int) gB.smoothedCoordinates.x + BASE_DIAMETER / 2,
-						(int) gB.smoothedCoordinates.y + BASE_DIAMETER / 2);
+				double shift = BASE_DIAMETER / 2;
+				if(isLast(gB) && isLastFixated())
+					shift += fixationsCounter;
+				
+					
+				marker.drawLine((int) gA.smoothedCoordinates.x + shift ,
+						(int) gA.smoothedCoordinates.y + shift,
+						(int) gB.smoothedCoordinates.x + shift,
+						(int) gB.smoothedCoordinates.y + shift);
 			}
 		}
 	}
