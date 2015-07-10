@@ -24,7 +24,7 @@ public class GazeController {
 
 	private static final int BASE_DIAMETER = 10;
 	private static final int MAX_DIAMETER = 25;
-	private static final int GAZES_NUMBER = 3;
+	private static final int GAZES_NUMBER = 5;
 
 	private List<GazeData> lastNGazes;
 	private int fixationsCounter = 0;
