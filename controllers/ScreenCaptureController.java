@@ -107,7 +107,9 @@ public class ScreenCaptureController {
 				
 			} else {
 				pausedTime += System.nanoTime() - pauseStart;
+				gazeController.pauseRecording();
 				paused = false;
+				
 			}
 
 			recording = true;

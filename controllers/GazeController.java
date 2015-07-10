@@ -25,8 +25,8 @@ public class GazeController {
 
 	private static final int BASE_DIAMETER = 10;
 	private static final int MAX_DIAMETER = 25;
-	private static final int GAZES_NUMBER = 5;
-	private static final int MIN_DISTANCE = 40;
+	private static final int GAZES_NUMBER = 4;
+	private static final int MIN_DISTANCE = 30;
 
 	private List<GazeData> lastNGazes;
 	private int fixationsCounter = 0;
@@ -167,10 +167,10 @@ public class GazeController {
 			GazeData gB = lastNGazes.get(i + 1);
 
 			if (isLooking(gA) && isLooking(gB)) {
-				marker.drawLine((int) gA.smoothedCoordinates.x,
-						(int) gA.smoothedCoordinates.y,
-						(int) gB.smoothedCoordinates.x,
-						(int) gB.smoothedCoordinates.y);
+				marker.drawLine((int) gA.smoothedCoordinates.x + BASE_DIAMETER / 2,
+						(int) gA.smoothedCoordinates.y + BASE_DIAMETER / 2,
+						(int) gB.smoothedCoordinates.x + BASE_DIAMETER / 2,
+						(int) gB.smoothedCoordinates.y + BASE_DIAMETER / 2);
 			}
 		}
 	}
