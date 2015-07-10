@@ -39,7 +39,7 @@ public class ScreenCaptureController {
 	private long pauseStart;
 	private long pausedTime;
 
-	private String workingDirectory = "";
+	private String workingDirectory;
 
 	public ScreenCaptureController(GazeController gazeController,
 			MovieController movieController) {
@@ -47,20 +47,35 @@ public class ScreenCaptureController {
 		this.gazeController = gazeController;
 		this.movieController = movieController;
 		this.paused = false;
-
+		
+		recording = false;
+		loadSettings();
+		
+		buildWindows();
+		
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				endRecording();
+			}
+		});
+	}
+	
+	private void buildWindows() {
 		this.mainFrame = new MainFrame();
+		
 		TopMenu topMenu = new TopMenu(this);
 		mainFrame.add(topMenu, BorderLayout.NORTH);
+		
 		JPanel middlePanel = new JPanel();
 		middlePanel.setLayout(new BorderLayout());
 		mainFrame.add(middlePanel, BorderLayout.CENTER);
+		
 		ActionToolBar toolbar = new ActionToolBar(this);
 		middlePanel.add(toolbar, BorderLayout.NORTH);
+		
 		mainFrame.setVisible(true);
 		mainFrame.pack();
-
-		recording = false;
-		loadSettings();
 	}
 
 	public BufferedImage captureScreen() {
@@ -81,7 +96,7 @@ public class ScreenCaptureController {
 				pausedTime = 0;
 				String currentTime = getCurrentTime();
 				
-				if(workingDirectory.equals(null)){
+				if(workingDirectory == null){
 					movieController.startRecording(currentTime);
 					gazeController.startRecording(currentTime);
 				}
@@ -139,20 +154,12 @@ public class ScreenCaptureController {
 				gazeController.addCurrentEyePosition(screenshot);
 
 				movieController.encodeImage(screenshot, pausedTime);
-				/*
-				try {
-					Thread.sleep(FRAME_RATE);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				*/
 			}
 		}
 	}
 
 	private String getCurrentTime() {
-		DateFormat dateFormat = new SimpleDateFormat(
-				"yyyy MM dd HH'h'mm'm'ss's'");
+		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH'h'mm'm'ss's'");
 		Date date = new Date();
 
 		return dateFormat.format(date);
@@ -188,7 +195,8 @@ public class ScreenCaptureController {
 				while(scanner.hasNext()) {
 					if(scanner.next().equals("workingDirectory")) {
 						scanner.next();
-						workingDirectory = scanner.next();
+						workingDirectory = scanner.nextLine();
+						workingDirectory = workingDirectory.trim();
 					}
 				}
 				scanner.close();
@@ -198,7 +206,7 @@ public class ScreenCaptureController {
 			}	
 		}
 	}
-	
+
 	public void saveSettings() {
 		File file = new File("settings.txt");
 		try{

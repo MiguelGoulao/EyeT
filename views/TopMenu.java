@@ -15,6 +15,7 @@ import javax.swing.KeyStroke;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import controllers.FileController;
 import controllers.ScreenCaptureController;
 
 public class TopMenu extends JMenuBar implements ActionListener{
@@ -36,7 +37,19 @@ public class TopMenu extends JMenuBar implements ActionListener{
 		
 		buildMenus();
 		
-		fc = new JFileChooser();
+		createFileChooser(controller.getWorkingDirectory());
+	}
+	
+	private void createFileChooser(String currentDirectory) {
+		
+		File dir;
+		if(currentDirectory == null) {
+			dir = new File(System.getProperty("user.dir"));
+		}
+		else {
+			dir = new File(currentDirectory);
+		}
+		fc = new JFileChooser(dir);
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		fc.setAcceptAllFileFilterUsed(false);
 	}
@@ -72,8 +85,9 @@ public class TopMenu extends JMenuBar implements ActionListener{
 		
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
             File folder = fc.getSelectedFile();
-            if(folder.canWrite()) {
+            if(FileController.canWrite(folder)) {
             	controller.setWorkingDirectory(folder.toString());
+            	fc.setCurrentDirectory(folder);
             }
             else {
             	controller.badDirectory();

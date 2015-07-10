@@ -24,6 +24,9 @@ public class ActionToolBar extends JToolBar implements ActionListener{
 	
 	private JButton recordButton;
 	private JButton stopButton;
+	
+	private Image recordImage;
+	private Image pauseImage;
 
 	public ActionToolBar(ScreenCaptureController controller) {
 		this.controller = controller;
@@ -36,12 +39,16 @@ public class ActionToolBar extends JToolBar implements ActionListener{
 		recordButton = new JButton();
 		stopButton = new JButton();
 		
+		
 		try {
-		    Image img = ImageIO.read(getClass().getResource("/resources/Record-32.png"));
-		    recordButton.setIcon(new ImageIcon(img));
+			
+			recordImage = ImageIO.read(getClass().getResource("/resources/Record-32.png"));
+		    recordButton.setIcon(new ImageIcon(recordImage));
 		    
-		    img = ImageIO.read(getClass().getResource("/resources/Stop-32.png"));
-		    stopButton.setIcon(new ImageIcon(img));
+		    pauseImage = ImageIO.read(getClass().getResource("/resources/Pause-32.png"));
+		    
+		    Image stopImage = ImageIO.read(getClass().getResource("/resources/Stop-32.png"));
+		    stopButton.setIcon(new ImageIcon(stopImage));
 
 		} 
 		catch (IOException ex) {
@@ -64,36 +71,21 @@ public class ActionToolBar extends JToolBar implements ActionListener{
         button.setMargin(new Insets(2, 2, 2, 2));
         button.addActionListener(this);
 	}
-	
-	private void changeRecordingButtonView() {
-		try{
-			if(controller.isCapturing()) {
-				Image img = ImageIO.read(getClass().getResource("/resources/Pause-32.png"));
-			    recordButton.setIcon(new ImageIcon(img));
-			}
-			else {
-				Image img = ImageIO.read(getClass().getResource("/resources/Record-32.png"));
-			    recordButton.setIcon(new ImageIcon(img));
-			}
-		}
-		catch(IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if(event.getSource() == recordButton) {
 			if(controller.isCapturing()) {
 				controller.pauseRecording();
+				recordButton.setIcon(new ImageIcon(recordImage));
 			}
 			else {
 				controller.startRecording();
+				recordButton.setIcon(new ImageIcon(pauseImage));
 			}
 		}
 		else if(event.getSource() == stopButton) {
 			controller.endRecording();
 		}
-		changeRecordingButtonView();
 	}
 }
