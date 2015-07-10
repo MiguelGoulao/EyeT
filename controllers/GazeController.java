@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
@@ -25,6 +26,7 @@ public class GazeController {
 	private static final int BASE_DIAMETER = 10;
 	private static final int MAX_DIAMETER = 25;
 	private static final int GAZES_NUMBER = 5;
+	private static final int MIN_DISTANCE = 40;
 
 	private List<GazeData> lastNGazes;
 	private int fixationsCounter = 0;
@@ -61,7 +63,7 @@ public class GazeController {
 
 	private void add(GazeData gaze) {
 		if (isLastFixated() || lastNGazes.size() == GAZES_NUMBER) {
-			if (gaze.isFixated)
+			if (gaze.isFixated || tooClose(gaze))
 				lastNGazes.remove(lastNGazes.size() - 1);
 			else
 				lastNGazes.remove(0);
@@ -81,9 +83,16 @@ public class GazeController {
 		return index >= 0 ? lastNGazes.get(index) : null;
 	}
 
+	private boolean tooClose(GazeData gaze) {
+		GazeData last = getLatest();
+		return Point.distance(last.smoothedCoordinates.x,
+						last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
+						gaze.smoothedCoordinates.y) <= MIN_DISTANCE;
+	}
+
 	public void addCurrentEyePosition(BufferedImage img) {
 		marker = img.createGraphics();
-		
+
 		if (isFixed())
 			fixationsCounter++;
 		else
@@ -103,7 +112,7 @@ public class GazeController {
 
 	private void markLatestGazes(BufferedImage img) {
 		marker.setStroke(new BasicStroke(3));
-		
+
 		for (GazeData gaze : lastNGazes) {
 			double x = gaze.smoothedCoordinates.x;
 			double y = gaze.smoothedCoordinates.y;
@@ -152,7 +161,7 @@ public class GazeController {
 	private void markSaccadesPaths() {
 		marker.setColor(Color.BLUE);
 		marker.setStroke(new BasicStroke(2));
-		
+
 		for (int i = 0; i < lastNGazes.size() - 1; i++) {
 			GazeData gA = lastNGazes.get(i);
 			GazeData gB = lastNGazes.get(i + 1);
