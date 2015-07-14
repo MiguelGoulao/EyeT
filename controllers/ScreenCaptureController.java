@@ -27,6 +27,7 @@ public class ScreenCaptureController {
 	private boolean recording;
 	private GazeController gazeController;
 	private MovieController movieController;
+	private ImageEditor imageEditor;
 
 	private CaptureLoop captureLoop;
 	private boolean paused;
@@ -40,6 +41,7 @@ public class ScreenCaptureController {
 
 		this.gazeController = gazeController;
 		this.movieController = movieController;
+		this.imageEditor = new ImageEditor(gazeController);
 		this.paused = false;
 		
 		recording = false;
@@ -146,8 +148,7 @@ public class ScreenCaptureController {
 			while (recording) {
 
 				BufferedImage screenshot = captureScreen();
-				gazeController.addCursor(screenshot);
-				gazeController.addCurrentEyePosition(screenshot);
+				imageEditor.addCurrentEyePosition(screenshot);
 
 				movieController.encodeImage(screenshot, pausedTime);
 			}
