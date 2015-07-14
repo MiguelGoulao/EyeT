@@ -6,7 +6,6 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -69,8 +68,7 @@ public class GazeController {
 				lastNGazes.remove(0);
 		}
 		lastNGazes.add(gaze);
-		System.out.println("Added: " + gaze.smoothedCoordinates.x + " "
-				+ gaze.smoothedCoordinates.y);
+		System.out.println("Added: " + gaze.smoothedCoordinates.x + " " + gaze.smoothedCoordinates.y);
 	}
 
 	private boolean isLastFixated() {
@@ -167,7 +165,7 @@ public class GazeController {
 			GazeData gB = lastNGazes.get(i + 1);
 
 			if (isLooking(gA) && isLooking(gB)) {
-				double shift = BASE_DIAMETER / 2;
+				int shift = BASE_DIAMETER / 2;
 				if(isLast(gB) && isLastFixated())
 					shift += fixationsCounter;
 				
@@ -241,7 +239,6 @@ public class GazeController {
 			outputFileWriter.flush();
 			outputFileWriter.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -2,9 +2,6 @@ package controllers;
 
 import java.awt.AWTException;
 import java.awt.BorderLayout;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.MouseInfo;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
@@ -17,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
-import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -26,9 +22,7 @@ import views.MainFrame;
 import views.TopMenu;
 
 public class ScreenCaptureController {
-
-	private static final int FRAME_RATE = 60;
-
+	
 	private MainFrame mainFrame;
 	private boolean recording;
 	private GazeController gazeController;
