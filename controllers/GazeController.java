@@ -1,9 +1,10 @@
 package controllers;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
-
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,14 +21,15 @@ public class GazeController {
 
 	private static final int GAZES_NUMBER = 3;
 	private static final int MIN_DISTANCE = 40;
+	private static final int MARGIN = 15;
 
 	private List<GazeData> gazeHistory;
-	private int fixationsCounter = 0;
 	private Graphics2D marker;
 	private FileWriter outputFileWriter;
 	private boolean recording;
 
 	private long fixationStart;
+	Dimension screenSize;
 
 	public GazeController() {
 		final GazeManager gm = GazeManager.getInstance();
@@ -45,6 +47,8 @@ public class GazeController {
 		});
 
 		gazeHistory = new CopyOnWriteArrayList<GazeData>();
+
+		screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 	}
 
 	private class GazeListener implements IGazeListener {
@@ -58,8 +62,8 @@ public class GazeController {
 
 	private void addGazeToHistory(GazeData gaze) {
 
-		if (isLastFixated() || gazeHistory.size() == GAZES_NUMBER) {
-			if (gaze.isFixated || nearTheLastFixated(gaze)) {
+		if (/* isLastFixated() || */gazeHistory.size() == GAZES_NUMBER) {
+			if (!gaze.isFixated || nearTheLastFixated(gaze)) {
 				gazeHistory.remove(gazeHistory.size() - 1);
 			} else {
 				gazeHistory.remove(0);
@@ -68,7 +72,7 @@ public class GazeController {
 		}
 		gazeHistory.add(gaze);
 		System.out.println("Added: " + gaze.smoothedCoordinates.x + " "
-				+ gaze.smoothedCoordinates.y);
+				+ gaze.smoothedCoordinates.y + "size: " + gazeHistory.size());
 	}
 
 	boolean isLastFixated() {
@@ -82,30 +86,28 @@ public class GazeController {
 	}
 
 	private boolean nearTheLastFixated(GazeData gaze) {
-//		if (gazeHistory.size() > 2) {
-//			GazeData last = gazeHistory.get(gazeHistory.size() - 2);
 		GazeData last = getLatest();
-		if(last != null){
-			return Point.distance(last.smoothedCoordinates.x,
-					last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
-					gaze.smoothedCoordinates.y) <= MIN_DISTANCE;
-		} else
-			return false;
 
+		return last != null ? Point.distance(last.smoothedCoordinates.x,
+				last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
+				gaze.smoothedCoordinates.y) <= MIN_DISTANCE : false;
 	}
-	
-	boolean isLooking(GazeData gaze) {
-		return gaze != null
-				&& (gaze.smoothedCoordinates.x > 0 || gaze.smoothedCoordinates.y > 0);
+
+	private boolean isLooking(GazeData gaze) {
+		return gaze != null && isInWidthRange(gaze.smoothedCoordinates.x)
+				& isInHeightRange(gaze.smoothedCoordinates.y) && gaze.smoothedCoordinates.x != 0 && gaze.smoothedCoordinates.y != 0 ;
+	}
+
+	boolean isInWidthRange(double x) {
+		return x + MARGIN > 0 && x < screenSize.getWidth() + MARGIN;
+	}
+
+	boolean isInHeightRange(double y) {
+		return y + MARGIN > 0 && y < screenSize.getHeight() + MARGIN;
 	}
 
 	boolean isLast(GazeData gaze) {
 		return gazeHistory.indexOf(gaze) == gazeHistory.size() - 1;
-	}
-
-	void setBorderOn(BufferedImage img) {
-		marker.setColor(Color.RED);
-		marker.drawRect(0, 0, img.getWidth() - 3, img.getHeight() - 3);
 	}
 
 	boolean atLeastTwoGazes() {
@@ -120,8 +122,16 @@ public class GazeController {
 			return 0;
 	}
 
+	boolean hasAnyGazesInRange() {
+		return !getGazeHistory().isEmpty();
+	}
+
 	List<GazeData> getGazeHistory() {
 		return gazeHistory;
+	}
+
+	Dimension getScreenSize() {
+		return screenSize;
 	}
 
 	public void startRecording(String filename) {
@@ -143,8 +153,11 @@ public class GazeController {
 	}
 
 	private void saveData(GazeData gazeData) {
-		System.out.println("is fixed: " + gazeData.isFixated);
-		addGazeToHistory(gazeData);
+		if (isLooking(gazeData))
+			addGazeToHistory(gazeData);
+		else
+			gazeHistory.clear();
+
 		try {
 			outputFileWriter.append(gazeData.timeStampString);
 			outputFileWriter.append(';');
@@ -161,7 +174,7 @@ public class GazeController {
 	}
 
 	public void endRecording() {
-
+		gazeHistory.clear();
 		recording = false;
 
 		try {
