@@ -2,11 +2,13 @@ package controllers;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-
 import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -16,18 +18,20 @@ import com.theeyetribe.client.GazeManager.ClientMode;
 import com.theeyetribe.client.IGazeListener;
 import com.theeyetribe.client.data.GazeData;
 
-public class GazeController {
+public class GazeController implements MouseListener{
 
 	private static final int GAZES_NUMBER = 4;
 	private static final int MIN_DISTANCE = 40;
 
 	private List<GazeData> gazeHistory;
-	private int fixationsCounter = 0;
+	private GazeData currentGaze;
 	private Graphics2D marker;
 	private FileWriter outputFileWriter;
 	private boolean recording;
 	
 	private long fixationStart;
+	
+	private boolean mousePressed;
 
 	public GazeController() {
 		final GazeManager gm = GazeManager.getInstance();
@@ -57,7 +61,7 @@ public class GazeController {
 	}
 
 	private void addGazeToHistory(GazeData gaze) {
-
+		
 		if (gazeHistory.size() == GAZES_NUMBER) {
 			if (!gaze.isFixated || nearTheLastFixated(gaze))
 			{
@@ -92,8 +96,7 @@ public class GazeController {
 	}
 
 	boolean isLooking(GazeData gaze) {
-		return gaze != null
-				&& (gaze.smoothedCoordinates.x > 0 || gaze.smoothedCoordinates.y > 0);
+		return gaze != null && (gaze.smoothedCoordinates.x > 0 || gaze.smoothedCoordinates.y > 0);
 	}
 
 	boolean isLast(GazeData gaze) {
@@ -131,6 +134,8 @@ public class GazeController {
 			outputFileWriter.append(';');
 			outputFileWriter.append("y");
 			outputFileWriter.append(';');
+			outputFileWriter.append("mouse pressed");
+			outputFileWriter.append(';');
 			outputFileWriter.append('\n');
 
 			recording = true;
@@ -140,7 +145,7 @@ public class GazeController {
 	}
 
 	private void saveData(GazeData gazeData) {
-		System.out.println("is fixed: " + gazeData.isFixated);
+		//System.out.println("is fixed: " + gazeData.isFixated);
 		addGazeToHistory(gazeData);
 		try {
 			outputFileWriter.append(gazeData.timeStampString);
@@ -148,8 +153,9 @@ public class GazeController {
 			outputFileWriter.append(Double
 					.toString(gazeData.smoothedCoordinates.x));
 			outputFileWriter.append(';');
-			outputFileWriter.append(Double
-					.toString(gazeData.smoothedCoordinates.y));
+			outputFileWriter.append(Double.toString(gazeData.smoothedCoordinates.y));
+			outputFileWriter.append(';');
+			outputFileWriter.append(Boolean.toString(mousePressed));
 			outputFileWriter.append(';');
 			outputFileWriter.append('\n');
 		} catch (IOException e) {
@@ -160,6 +166,7 @@ public class GazeController {
 	public void endRecording() {
 
 		recording = false;
+		gazeHistory.clear();
 
 		try {
 			outputFileWriter.flush();
@@ -171,5 +178,35 @@ public class GazeController {
 
 	public void pauseRecording() {
 		recording = !recording;
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+		mousePressed = true;
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent arg0) {
+		mousePressed = false;
+		
 	}
 }
