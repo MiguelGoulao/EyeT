@@ -14,7 +14,7 @@ import com.theeyetribe.client.data.GazeData;
 
 public class ImageEditor {
 	
-	private GazeController gc;
+	private DataController gc;
 	
 	private int circleStrokeWidth;
 	private int pathStrokeWidth;
@@ -25,7 +25,7 @@ public class ImageEditor {
 	
 	private Graphics2D g2d;
 	
-	public ImageEditor(GazeController gazeController) {
+	public ImageEditor(DataController gazeController) {
 		this.gc = gazeController;
 		loadResources();
 		initializeVariables();
@@ -78,13 +78,19 @@ public class ImageEditor {
 			if (gc.isLooking(gaze)) {
 				int size = 0;
 				
+				int shift = baseDiameter / 2;
+				
 				if (gc.isLast(gaze)) {
 					g2d.setColor(Color.GREEN);
+					shift = getFixationCircleGrowth() / 2;
 					size = getFixationCircleGrowth();
 				} else {
 					size = baseDiameter;
 					g2d.setColor(Color.RED);
 				}
+				
+				x -= shift;
+				y -= shift;
 
 				if (size <= maxDiameter)
 					g2d.drawOval((int) x, (int) y, size, size);
@@ -107,16 +113,11 @@ public class ImageEditor {
 			GazeData endGaze = gc.getGazeHistory().get(i + 1);
 
 			if (gc.isLooking(startGaze) && gc.isLooking(endGaze)) {
-				int startShift = baseDiameter / 2;
-				int endShift = baseDiameter / 2;
-				if(gc.isLast(endGaze)) {
-					endShift = getFixationCircleGrowth() / 2;
-				}
 				
-				g2d.drawLine((int) startGaze.smoothedCoordinates.x + startShift ,
-						(int) startGaze.smoothedCoordinates.y + startShift,
-						(int) endGaze.smoothedCoordinates.x + endShift,
-						(int) endGaze.smoothedCoordinates.y + endShift);
+				g2d.drawLine((int) startGaze.smoothedCoordinates.x ,
+						(int) startGaze.smoothedCoordinates.y,
+						(int) endGaze.smoothedCoordinates.x,
+						(int) endGaze.smoothedCoordinates.y);
 			}
 		}
 	}
