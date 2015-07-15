@@ -44,7 +44,7 @@ public class ImageEditor {
 		circleStrokeWidth = 3;
 		pathStrokeWidth = 2;
 		baseDiameter = 10;
-		maxDiameter = 100;
+		maxDiameter = 80;
 	}
 	
 	public void addCursor(BufferedImage img) {

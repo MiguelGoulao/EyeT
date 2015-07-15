@@ -18,7 +18,7 @@ import com.theeyetribe.client.data.GazeData;
 
 public class GazeController {
 
-	private static final int GAZES_NUMBER = 4;
+	private static final int GAZES_NUMBER = 3;
 	private static final int MIN_DISTANCE = 40;
 
 	private List<GazeData> gazeHistory;
@@ -26,7 +26,7 @@ public class GazeController {
 	private Graphics2D marker;
 	private FileWriter outputFileWriter;
 	private boolean recording;
-	
+
 	private long fixationStart;
 
 	public GazeController() {
@@ -58,18 +58,17 @@ public class GazeController {
 
 	private void addGazeToHistory(GazeData gaze) {
 
-		if (gazeHistory.size() == GAZES_NUMBER) {
-			if (!gaze.isFixated || nearTheLastFixated(gaze))
-			{
+		if (isLastFixated() || gazeHistory.size() == GAZES_NUMBER) {
+			if (gaze.isFixated || nearTheLastFixated(gaze)) {
 				gazeHistory.remove(gazeHistory.size() - 1);
-			}
-			else {
+			} else {
 				gazeHistory.remove(0);
 				fixationStart = gaze.timeStamp;
 			}
 		}
 		gazeHistory.add(gaze);
-		System.out.println("Added: " + gaze.smoothedCoordinates.x + " " + gaze.smoothedCoordinates.y);
+		System.out.println("Added: " + gaze.smoothedCoordinates.x + " "
+				+ gaze.smoothedCoordinates.y);
 	}
 
 	boolean isLastFixated() {
@@ -83,14 +82,18 @@ public class GazeController {
 	}
 
 	private boolean nearTheLastFixated(GazeData gaze) {
-		if(gazeHistory.size() > 2) {
-			GazeData last = gazeHistory.get(gazeHistory.size() - 2);
-			return Point.distance(last.smoothedCoordinates.x, last.smoothedCoordinates.y, gaze.smoothedCoordinates.x, gaze.smoothedCoordinates.y) <= MIN_DISTANCE;
-		}
-		else return false;
-		
-	}
+//		if (gazeHistory.size() > 2) {
+//			GazeData last = gazeHistory.get(gazeHistory.size() - 2);
+		GazeData last = getLatest();
+		if(last != null){
+			return Point.distance(last.smoothedCoordinates.x,
+					last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
+					gaze.smoothedCoordinates.y) <= MIN_DISTANCE;
+		} else
+			return false;
 
+	}
+	
 	boolean isLooking(GazeData gaze) {
 		return gaze != null
 				&& (gaze.smoothedCoordinates.x > 0 || gaze.smoothedCoordinates.y > 0);
@@ -108,15 +111,15 @@ public class GazeController {
 	boolean atLeastTwoGazes() {
 		return gazeHistory.size() >= 2;
 	}
-	
+
 	long lastFixationLength() {
 		GazeData last = getLatest();
-		if(last.isFixated) {
+		if (last.isFixated) {
 			return System.currentTimeMillis() - fixationStart;
-		}
-		else return 0;
+		} else
+			return 0;
 	}
-	
+
 	List<GazeData> getGazeHistory() {
 		return gazeHistory;
 	}
