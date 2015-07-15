@@ -21,7 +21,8 @@ public class ImageEditor {
 	private int baseDiameter;
 	private int maxDiameter;
 	
-	private BufferedImage cursor;	
+	private BufferedImage cursor;
+	private BufferedImage cursorPressed;
 	
 	private Graphics2D g2d;
 	
@@ -34,6 +35,7 @@ public class ImageEditor {
 	private void loadResources() {
 		try {
 			cursor = ImageIO.read(getClass().getResource("/resources/cursor.png"));
+			cursorPressed = ImageIO.read(getClass().getResource("/resources/cursor2.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -52,7 +54,13 @@ public class ImageEditor {
 		int x = MouseInfo.getPointerInfo().getLocation().x;
 		int y = MouseInfo.getPointerInfo().getLocation().y;
 
-		g2d.drawImage(cursor, x, y, 16, 16, null);
+		if(gc.isKeyPressed()) {
+			g2d.drawImage(cursorPressed, x, y, 16, 16, null);
+		}
+		else{
+			g2d.drawImage(cursor, x, y, 16, 16, null);
+		}
+		
 	}
 	
 	public void addCurrentEyePosition(BufferedImage img) {

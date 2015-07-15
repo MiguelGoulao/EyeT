@@ -13,10 +13,14 @@ import org.jnativehook.mouse.NativeMouseInputListener;
 public class KeyLogger implements NativeKeyListener, NativeMouseInputListener{
 	
 	private LinkedList<String> lastOperations;
+	private boolean keyPressed;
 	
 	public KeyLogger() {
-		registerNativeHook();
+		keyPressed = false;
+		
 		lastOperations = new LinkedList<>();
+		registerNativeHook();
+		
 	}
 	
 	private void registerNativeHook() {
@@ -47,6 +51,10 @@ public class KeyLogger implements NativeKeyListener, NativeMouseInputListener{
 		lastOperations.clear();
 		return clone;
 	}
+	
+	public boolean isKeyPressed() {
+		return keyPressed;
+	}
 
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent e) {
@@ -68,18 +76,20 @@ public class KeyLogger implements NativeKeyListener, NativeMouseInputListener{
 
 	@Override
 	public void nativeMouseClicked(NativeMouseEvent e) {
-		lastOperations.add(e.getButton() + " clicked " + e.getClickCount() + " times");
+		lastOperations.add("Button " + e.getButton() + " clicked " + e.getClickCount() + " times");
 	}
 
 	@Override
-	public void nativeMousePressed(NativeMouseEvent arg0) {
-		// TODO Auto-generated method stub
+	public void nativeMousePressed(NativeMouseEvent e) {
+		lastOperations.add("Button " + e.getButton() + " pressed");
+		keyPressed = true;
 		
 	}
 
 	@Override
-	public void nativeMouseReleased(NativeMouseEvent arg0) {
-		// TODO Auto-generated method stub
+	public void nativeMouseReleased(NativeMouseEvent e) {
+		lastOperations.add("Button " + e.getButton() + " released");
+		keyPressed = false;
 		
 	}
 

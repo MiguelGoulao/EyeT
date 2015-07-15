@@ -2,6 +2,7 @@ package controllers;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
@@ -118,8 +119,13 @@ public class DataController {
 	List<GazeData> getGazeHistory() {
 		return gazeHistory;
 	}
+	
+	public boolean isKeyPressed() {
+		return keyLogger.isKeyPressed();
+	}
 
 	public void startRecording(String filename) {
+		keyLogger.startRecording();
 		try {
 			outputFileWriter = new FileWriter(filename + ".csv");
 
@@ -128,6 +134,10 @@ public class DataController {
 			outputFileWriter.append("x");
 			outputFileWriter.append(';');
 			outputFileWriter.append("y");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Mouse x");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Mouse y");
 			outputFileWriter.append(';');
 			outputFileWriter.append("Keyboard and mouse events");
 			outputFileWriter.append(';');
@@ -149,6 +159,10 @@ public class DataController {
 			outputFileWriter.append(Double.toString(gazeData.smoothedCoordinates.x));
 			outputFileWriter.append(';');
 			outputFileWriter.append(Double.toString(gazeData.smoothedCoordinates.y));
+			outputFileWriter.append(';');
+			outputFileWriter.append(Integer.toString(MouseInfo.getPointerInfo().getLocation().x));
+			outputFileWriter.append(';');
+			outputFileWriter.append(Integer.toString(MouseInfo.getPointerInfo().getLocation().y));
 			outputFileWriter.append(';');
 			saveKeyLoggerData();
 			outputFileWriter.append('\n');
@@ -178,6 +192,7 @@ public class DataController {
 	public void endRecording() {
 		gazeHistory.clear();
 		recording = false;
+		keyLogger.endRecording();
 
 		try {
 			outputFileWriter.flush();
@@ -189,5 +204,11 @@ public class DataController {
 
 	public void pauseRecording() {
 		recording = !recording;
+		if(recording) {
+			keyLogger.startRecording();
+		}
+		else {
+			keyLogger.endRecording();
+		}
 	}
 }
