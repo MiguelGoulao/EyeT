@@ -37,7 +37,7 @@ public class DataController {
 		final GazeListener gazeListener = new GazeListener();
 		gm.addGazeListener(gazeListener);
 		
-		final KeyLogger keylogger = new KeyLogger();
+		keyLogger = new KeyLogger();
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override

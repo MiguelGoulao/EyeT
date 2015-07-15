@@ -29,9 +29,16 @@ public class KeyLogger implements NativeKeyListener, NativeMouseInputListener{
             System.err.println(ex.getMessage());
             System.exit(1);
         }
-		
+	}
+	
+	public void startRecording() {
 		GlobalScreen.addNativeKeyListener(this);
         GlobalScreen.addNativeMouseListener(this);
+	}
+	
+	public void endRecording() {
+		GlobalScreen.removeNativeKeyListener(this);
+		GlobalScreen.removeNativeMouseListener(this);
 	}
 	
 	public LinkedList<String> getLastOperations() {
