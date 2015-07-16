@@ -19,7 +19,7 @@ import com.theeyetribe.client.data.GazeData;
 
 public class GazeController {
 
-	private static final int GAZES_NUMBER = 3;
+	private static final int GAZES_NUMBER = 4;
 	private static final int MIN_DISTANCE = 40;
 	private static final int MARGIN = 15;
 
@@ -72,7 +72,7 @@ public class GazeController {
 		}
 		gazeHistory.add(gaze);
 		System.out.println("Added: " + gaze.smoothedCoordinates.x + " "
-				+ gaze.smoothedCoordinates.y + "size: " + gazeHistory.size());
+				+ gaze.smoothedCoordinates.y);
 	}
 
 	boolean isLastFixated() {
@@ -86,24 +86,37 @@ public class GazeController {
 	}
 
 	private boolean nearTheLastFixated(GazeData gaze) {
-		GazeData last = getLatest();
+		if (gazeHistory.size() > 2) {
+			GazeData last = gazeHistory.get(gazeHistory.size() - 2); 
+			return Point.distance(last.smoothedCoordinates.x,
+					last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
+					gaze.smoothedCoordinates.y) <= MIN_DISTANCE;
+		} else
+			return false;
 
-		return last != null ? Point.distance(last.smoothedCoordinates.x,
-				last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
-				gaze.smoothedCoordinates.y) <= MIN_DISTANCE : false;
 	}
 
 	private boolean isLooking(GazeData gaze) {
-		return gaze != null && isInWidthRange(gaze.smoothedCoordinates.x)
-				& isInHeightRange(gaze.smoothedCoordinates.y) && gaze.smoothedCoordinates.x != 0 && gaze.smoothedCoordinates.y != 0 ;
+		return gaze != null && isInWidthRange(gaze.smoothedCoordinates.x, MARGIN)
+				& isInHeightRange(gaze.smoothedCoordinates.y, MARGIN)
+				&& gaze.smoothedCoordinates.x != 0
+				&& gaze.smoothedCoordinates.y != 0;
 	}
 
-	boolean isInWidthRange(double x) {
-		return x + MARGIN > 0 && x < screenSize.getWidth() + MARGIN;
+	boolean isInWidthRange(double x){
+		return isInWidthRange(x, 0);
+	}
+	
+	private boolean isInWidthRange(double x, int margin) {
+		return x + margin > 0 && x < screenSize.getWidth() + margin;
 	}
 
-	boolean isInHeightRange(double y) {
-		return y + MARGIN > 0 && y < screenSize.getHeight() + MARGIN;
+	boolean isInHeightRange(double y){
+		return isInHeightRange(y, 0);
+	}
+	
+	private boolean isInHeightRange(double y, int margin) {
+		return y + margin > 0 && y < screenSize.getHeight() + margin;
 	}
 
 	boolean isLast(GazeData gaze) {

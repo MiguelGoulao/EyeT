@@ -55,12 +55,12 @@ public class ImageEditor {
 
 		g2d.drawImage(cursor, x, y, 16, 16, null);
 	}
- 
+
 	public void addCurrentEyePosition(BufferedImage img) {
 		g2d = img.createGraphics();
 
 		addCursor(img);
-		
+
 		if (gc.hasAnyGazesInRange()) {
 			System.out.println(gc.getGazeHistory().size());
 			markLatestGazes(img);
@@ -83,9 +83,6 @@ public class ImageEditor {
 			double y = gaze.smoothedCoordinates.y;
 
 			int size = 0;
-
-			int shift = baseDiameter / 2;
-
 			if (gc.isLast(gaze)) {
 				g2d.setColor(Color.GREEN);
 				size = getFixationCircleGrowth();
@@ -94,8 +91,9 @@ public class ImageEditor {
 				g2d.setColor(Color.RED);
 			}
 
-			x -= shift;
-			y -= shift;
+			int shift = size / 2;
+			x = calcualteX(x) - shift;
+			y = calcualteY(y) - shift;
 
 			if (size <= maxDiameter)
 				g2d.drawOval((int) x, (int) y, size, size);
@@ -112,39 +110,32 @@ public class ImageEditor {
 			GazeData startGaze = gc.getGazeHistory().get(i);
 			GazeData endGaze = gc.getGazeHistory().get(i + 1);
 
-			int startShift = baseDiameter / 2;
-			int endShift = baseDiameter / 2;
-			if (gc.isLast(endGaze)) {
-				endShift = getFixationCircleGrowth() / 2;
-			}
-
 			int startX = (int) calcualteX(startGaze.smoothedCoordinates.x);
 			int startY = (int) calcualteY(startGaze.smoothedCoordinates.y);
 			int endX = (int) calcualteX(endGaze.smoothedCoordinates.x);
 			int endY = (int) calcualteY(endGaze.smoothedCoordinates.y);
-			
-			g2d.drawLine(startX + startShift, startY + startShift, endX + endShift, endY + endShift);
-			System.out.println("draw");
+
+			g2d.drawLine(startX, startY, endX, endY);
 		}
 	}
 
 	private double calcualteX(double x) {
-		if(gc.isInWidthRange(x))
+		if (gc.isInWidthRange(x))
 			return x;
-		
-		return x < 0 ? 15 : gc.getScreenSize().getWidth() - 15;
+
+		return x < 0 ? 0 : gc.getScreenSize().getWidth();
 	}
-	
+
 	private double calcualteY(double y) {
-		if(gc.isInHeightRange(y))
+		if (gc.isInHeightRange(y))
 			return y;
-		
-		return y < 0 ? 15 : gc.getScreenSize().getHeight() - 15;
+
+		return y < 0 ? 0 : gc.getScreenSize().getHeight();
 	}
 
 	private int getFixationCircleGrowth() {
 		return Math.min(maxDiameter,
-				baseDiameter + (int) (gc.lastFixationLength() / 10));
+				baseDiameter + (int) (gc.lastFixationLength() / 100));
 	}
 
 	private void setBorderOn(BufferedImage img) {
