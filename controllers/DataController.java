@@ -3,11 +3,14 @@ package controllers;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -17,26 +20,28 @@ import com.theeyetribe.client.GazeManager.ClientMode;
 import com.theeyetribe.client.IGazeListener;
 import com.theeyetribe.client.data.GazeData;
 
-public class GazeController {
+public class DataController {
 
 	private static final int GAZES_NUMBER = 4;
 	private static final int MIN_DISTANCE = 40;
 	private static final int MARGIN = 15;
 
 	private List<GazeData> gazeHistory;
-	private Graphics2D marker;
 	private FileWriter outputFileWriter;
 	private boolean recording;
 
 	private long fixationStart;
-	Dimension screenSize;
 
-	public GazeController() {
+	private KeyLogger keyLogger;
+
+	public DataController() {
 		final GazeManager gm = GazeManager.getInstance();
 		gm.activate(ApiVersion.VERSION_1_0, ClientMode.PUSH);
 
 		final GazeListener gazeListener = new GazeListener();
 		gm.addGazeListener(gazeListener);
+
+		keyLogger = new KeyLogger();
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -47,8 +52,6 @@ public class GazeController {
 		});
 
 		gazeHistory = new CopyOnWriteArrayList<GazeData>();
-
-		screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 	}
 
 	private class GazeListener implements IGazeListener {
@@ -61,8 +64,7 @@ public class GazeController {
 	}
 
 	private void addGazeToHistory(GazeData gaze) {
-
-		if (/* isLastFixated() || */gazeHistory.size() == GAZES_NUMBER) {
+		if (gazeHistory.size() == GAZES_NUMBER) {
 			if (!gaze.isFixated || nearTheLastFixated(gaze)) {
 				gazeHistory.remove(gazeHistory.size() - 1);
 			} else {
@@ -87,36 +89,36 @@ public class GazeController {
 
 	private boolean nearTheLastFixated(GazeData gaze) {
 		if (gazeHistory.size() > 2) {
-			GazeData last = gazeHistory.get(gazeHistory.size() - 2); 
+			GazeData last = gazeHistory.get(gazeHistory.size() - 2);
 			return Point.distance(last.smoothedCoordinates.x,
 					last.smoothedCoordinates.y, gaze.smoothedCoordinates.x,
 					gaze.smoothedCoordinates.y) <= MIN_DISTANCE;
 		} else
 			return false;
-
 	}
 
 	private boolean isLooking(GazeData gaze) {
-		return gaze != null && isInWidthRange(gaze.smoothedCoordinates.x, MARGIN)
+		return gaze != null
+				&& isInWidthRange(gaze.smoothedCoordinates.x, MARGIN)
 				& isInHeightRange(gaze.smoothedCoordinates.y, MARGIN)
 				&& gaze.smoothedCoordinates.x != 0
 				&& gaze.smoothedCoordinates.y != 0;
 	}
 
-	boolean isInWidthRange(double x){
+	boolean isInWidthRange(double x) {
 		return isInWidthRange(x, 0);
 	}
-	
+
 	private boolean isInWidthRange(double x, int margin) {
-		return x + margin > 0 && x < screenSize.getWidth() + margin;
+		return x + margin > 0 && x < getScreenSize().getWidth() + margin;
 	}
 
-	boolean isInHeightRange(double y){
+	boolean isInHeightRange(double y) {
 		return isInHeightRange(y, 0);
 	}
-	
+
 	private boolean isInHeightRange(double y, int margin) {
-		return y + margin > 0 && y < screenSize.getHeight() + margin;
+		return y + margin > 0 && y < getScreenSize().getHeight() + margin;
 	}
 
 	boolean isLast(GazeData gaze) {
@@ -144,10 +146,15 @@ public class GazeController {
 	}
 
 	Dimension getScreenSize() {
-		return screenSize;
+		return Toolkit.getDefaultToolkit().getScreenSize();
+	}
+
+	public boolean isMousePressed() {
+		return keyLogger.isMousePressed();
 	}
 
 	public void startRecording(String filename) {
+		keyLogger.startRecording();
 		try {
 			outputFileWriter = new FileWriter(filename + ".csv");
 
@@ -156,6 +163,12 @@ public class GazeController {
 			outputFileWriter.append("x");
 			outputFileWriter.append(';');
 			outputFileWriter.append("y");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Mouse x");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Mouse y");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Keyboard and mouse events");
 			outputFileWriter.append(';');
 			outputFileWriter.append('\n');
 
@@ -180,7 +193,31 @@ public class GazeController {
 			outputFileWriter.append(Double
 					.toString(gazeData.smoothedCoordinates.y));
 			outputFileWriter.append(';');
+			outputFileWriter.append(Integer.toString(MouseInfo.getPointerInfo()
+					.getLocation().x));
+			outputFileWriter.append(';');
+			outputFileWriter.append(Integer.toString(MouseInfo.getPointerInfo()
+					.getLocation().y));
+			outputFileWriter.append(';');
+			saveKeyLoggerData();
 			outputFileWriter.append('\n');
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void saveKeyLoggerData() {
+		LinkedList<String> keyLoggerData = keyLogger.getLastOperations();
+		Iterator<String> it = keyLoggerData.iterator();
+
+		try {
+			while (it.hasNext()) {
+				outputFileWriter.append(it.next());
+				if (it.hasNext()) {
+					outputFileWriter.append(", ");
+				}
+			}
+			outputFileWriter.append(';');
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -189,6 +226,7 @@ public class GazeController {
 	public void endRecording() {
 		gazeHistory.clear();
 		recording = false;
+		keyLogger.endRecording();
 
 		try {
 			outputFileWriter.flush();
@@ -200,5 +238,10 @@ public class GazeController {
 
 	public void pauseRecording() {
 		recording = !recording;
+		if (recording) {
+			keyLogger.startRecording();
+		} else {
+			keyLogger.endRecording();
+		}
 	}
 }

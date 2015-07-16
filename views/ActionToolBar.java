@@ -86,6 +86,7 @@ public class ActionToolBar extends JToolBar implements ActionListener{
 		}
 		else if(event.getSource() == stopButton) {
 			controller.endRecording();
+			recordButton.setIcon(new ImageIcon(recordImage));
 		}
 	}
 }

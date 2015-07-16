@@ -14,19 +14,19 @@ import com.theeyetribe.client.data.GazeData;
 
 public class ImageEditor {
 
-	private GazeController gc;
-
+	private DataController dc;
 	private int circleStrokeWidth;
 	private int pathStrokeWidth;
 	private int baseDiameter;
 	private int maxDiameter;
 
 	private BufferedImage cursor;
+	private BufferedImage cursorPressed;
 
 	private Graphics2D g2d;
 
-	public ImageEditor(GazeController gazeController) {
-		this.gc = gazeController;
+	public ImageEditor(DataController gazeController) {
+		this.dc = gazeController;
 		loadResources();
 		initializeVariables();
 	}
@@ -35,6 +35,8 @@ public class ImageEditor {
 		try {
 			cursor = ImageIO.read(getClass().getResource(
 					"/resources/cursor.png"));
+			cursorPressed = ImageIO.read(getClass().getResource(
+					"/resources/cursor2.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -53,7 +55,12 @@ public class ImageEditor {
 		int x = MouseInfo.getPointerInfo().getLocation().x;
 		int y = MouseInfo.getPointerInfo().getLocation().y;
 
-		g2d.drawImage(cursor, x, y, 16, 16, null);
+		if (dc.isMousePressed()) {
+			g2d.drawImage(cursorPressed, x, y, 32, 32, null);
+		} else {
+			g2d.drawImage(cursor, x, y, 16, 16, null);
+		}
+
 	}
 
 	public void addCurrentEyePosition(BufferedImage img) {
@@ -61,11 +68,11 @@ public class ImageEditor {
 
 		addCursor(img);
 
-		if (gc.hasAnyGazesInRange()) {
-			System.out.println(gc.getGazeHistory().size());
+		if (dc.hasAnyGazesInRange()) {
+			System.out.println(dc.getGazeHistory().size());
 			markLatestGazes(img);
 
-			if (gc.atLeastTwoGazes())
+			if (dc.atLeastTwoGazes())
 				markSaccadesPaths();
 
 		} else {
@@ -78,37 +85,39 @@ public class ImageEditor {
 	private void markLatestGazes(BufferedImage img) {
 		g2d.setStroke(new BasicStroke(circleStrokeWidth));
 
-		for (GazeData gaze : gc.getGazeHistory()) {
-			double x = gaze.smoothedCoordinates.x;
-			double y = gaze.smoothedCoordinates.y;
+		for (GazeData gaze : dc.getGazeHistory())
+			drawGaze(gaze, g2d);
+	}
 
-			int size = 0;
-			if (gc.isLast(gaze)) {
-				g2d.setColor(Color.GREEN);
-				size = getFixationCircleGrowth();
-			} else {
-				size = baseDiameter;
-				g2d.setColor(Color.RED);
-			}
-
-			int shift = size / 2;
-			x = calcualteX(x) - shift;
-			y = calcualteY(y) - shift;
-
-			if (size <= maxDiameter)
-				g2d.drawOval((int) x, (int) y, size, size);
-			else
-				g2d.fillOval((int) x, (int) y, maxDiameter, maxDiameter);
+	private void drawGaze(GazeData gaze, Graphics2D g2d) {
+		double x = gaze.smoothedCoordinates.x;
+		double y = gaze.smoothedCoordinates.y;
+		int size = 0;
+		if (dc.isLast(gaze)) {
+			g2d.setColor(Color.GREEN);
+			size = getFixationCircleGrowth();
+		} else {
+			size = baseDiameter;
+			g2d.setColor(Color.RED);
 		}
+		int shift = size / 2;
+		x = calcualteX(x) - shift;
+		y = calcualteY(y) - shift;
+
+		if (size <= maxDiameter)
+			g2d.drawOval((int) x, (int) y, size, size);
+		else
+			g2d.fillOval((int) x, (int) y, maxDiameter, maxDiameter);
+
 	}
 
 	private void markSaccadesPaths() {
 		g2d.setColor(Color.BLUE);
 		g2d.setStroke(new BasicStroke(pathStrokeWidth));
 
-		for (int i = 0; i < gc.getGazeHistory().size() - 1; i++) {
-			GazeData startGaze = gc.getGazeHistory().get(i);
-			GazeData endGaze = gc.getGazeHistory().get(i + 1);
+		for (int i = 0; i < dc.getGazeHistory().size() - 1; i++) {
+			GazeData startGaze = dc.getGazeHistory().get(i);
+			GazeData endGaze = dc.getGazeHistory().get(i + 1);
 
 			int startX = (int) calcualteX(startGaze.smoothedCoordinates.x);
 			int startY = (int) calcualteY(startGaze.smoothedCoordinates.y);
@@ -116,26 +125,27 @@ public class ImageEditor {
 			int endY = (int) calcualteY(endGaze.smoothedCoordinates.y);
 
 			g2d.drawLine(startX, startY, endX, endY);
+
 		}
 	}
 
 	private double calcualteX(double x) {
-		if (gc.isInWidthRange(x))
+		if (dc.isInWidthRange(x))
 			return x;
 
-		return x < 0 ? 0 : gc.getScreenSize().getWidth();
+		return x < 0 ? 0 : dc.getScreenSize().getWidth();
 	}
 
 	private double calcualteY(double y) {
-		if (gc.isInHeightRange(y))
+		if (dc.isInHeightRange(y))
 			return y;
 
-		return y < 0 ? 0 : gc.getScreenSize().getHeight();
+		return y < 0 ? 0 : dc.getScreenSize().getHeight();
 	}
 
 	private int getFixationCircleGrowth() {
 		return Math.min(maxDiameter,
-				baseDiameter + (int) (gc.lastFixationLength() / 100));
+				baseDiameter + (int) (dc.lastFixationLength() / 100));
 	}
 
 	private void setBorderOn(BufferedImage img) {

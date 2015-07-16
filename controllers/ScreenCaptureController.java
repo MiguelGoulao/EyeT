@@ -25,7 +25,7 @@ public class ScreenCaptureController {
 	
 	private MainFrame mainFrame;
 	private boolean recording;
-	private GazeController gazeController;
+	private DataController gazeController;
 	private MovieController movieController;
 	private ImageEditor imageEditor;
 
@@ -36,7 +36,7 @@ public class ScreenCaptureController {
 
 	private String workingDirectory;
 
-	public ScreenCaptureController(GazeController gazeController,
+	public ScreenCaptureController(DataController gazeController,
 			MovieController movieController) {
 
 		this.gazeController = gazeController;
@@ -217,7 +217,7 @@ public class ScreenCaptureController {
 	}
 
 	public static void main(String args[]) {
-		GazeController gc = new GazeController();
+		DataController gc = new DataController();
 		MovieController mc = new MovieController();
 		ScreenCaptureController scc = new ScreenCaptureController(gc, mc);
 	}
