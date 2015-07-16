@@ -54,8 +54,8 @@ public class ImageEditor {
 		int x = MouseInfo.getPointerInfo().getLocation().x;
 		int y = MouseInfo.getPointerInfo().getLocation().y;
 
-		if(gc.isKeyPressed()) {
-			g2d.drawImage(cursorPressed, x, y, 16, 16, null);
+		if(gc.isMousePressed()) {
+			g2d.drawImage(cursorPressed, x, y, 32, 32, null);
 		}
 		else{
 			g2d.drawImage(cursor, x, y, 16, 16, null);
@@ -80,35 +80,38 @@ public class ImageEditor {
 		g2d.setStroke(new BasicStroke(circleStrokeWidth));
 
 		for (GazeData gaze : gc.getGazeHistory()) {
-			double x = gaze.smoothedCoordinates.x;
-			double y = gaze.smoothedCoordinates.y;
 
 			if (gc.isLooking(gaze)) {
-				int size = 0;
-				
-				int shift = baseDiameter / 2;
-				
-				if (gc.isLast(gaze)) {
-					g2d.setColor(Color.GREEN);
-					shift = getFixationCircleGrowth() / 2;
-					size = getFixationCircleGrowth();
-				} else {
-					size = baseDiameter;
-					g2d.setColor(Color.RED);
-				}
-				
-				x -= shift;
-				y -= shift;
-
-				if (size <= maxDiameter)
-					g2d.drawOval((int) x, (int) y, size, size);
-				else
-					g2d.fillOval((int) x, (int) y, maxDiameter, maxDiameter);
+				drawGaze(gaze, g2d);
 			} 
 			else {
 				setBorderOn(img);
 			}
 		}
+	}
+	
+	private void drawGaze(GazeData gaze, Graphics2D g2d) {
+		double x = gaze.smoothedCoordinates.x;
+		double y = gaze.smoothedCoordinates.y;
+		int size = 0;
+		int shift = baseDiameter / 2;
+		
+		if (gc.isLast(gaze)) {
+			g2d.setColor(Color.GREEN);
+			shift = getFixationCircleGrowth() / 2;
+			size = getFixationCircleGrowth();
+		} else {
+			size = baseDiameter;
+			g2d.setColor(Color.RED);
+		}
+		
+		x -= shift;
+		y -= shift;
+
+		if (size <= maxDiameter)
+			g2d.drawOval((int) x, (int) y, size, size);
+		else
+			g2d.fillOval((int) x, (int) y, maxDiameter, maxDiameter);
 	}
 	
 	private void markSaccadesPaths() {

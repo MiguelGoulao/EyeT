@@ -120,8 +120,8 @@ public class DataController {
 		return gazeHistory;
 	}
 	
-	public boolean isKeyPressed() {
-		return keyLogger.isKeyPressed();
+	public boolean isMousePressed() {
+		return keyLogger.isMousePressed();
 	}
 
 	public void startRecording(String filename) {
