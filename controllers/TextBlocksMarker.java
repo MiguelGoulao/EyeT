@@ -31,9 +31,9 @@ public class TextBlocksMarker {
 	}
 	
 	public static TextBlocksMarker sentenceSize(BufferedImage source){
-		return new TextBlocksMarker(source, 9, 2);
+		return new TextBlocksMarker(source, 16, 1);
 	}
-	
+
 	public static TextBlocksMarker smallWindowSize(BufferedImage source){
 		return new TextBlocksMarker(source, 14, 13);
 	}
@@ -45,11 +45,6 @@ public class TextBlocksMarker {
 		markImage(boxes);
 
 		return image;
-	}
-
-	public void setArea(int w, int h) {
-		width = w;
-		height = h;
 	}
 
 	private Mat matify(BufferedImage img) {
@@ -71,14 +66,11 @@ public class TextBlocksMarker {
 		Mat hierarchy = new Mat();
 
 		Imgproc.cvtColor(img, imgGray, Imgproc.COLOR_RGB2GRAY);
-		Imgproc.Sobel(imgGray, imgSobel, CvType.CV_8U, 1, 0, 3, 1, 0,
-				Core.BORDER_DEFAULT);
+		Imgproc.Sobel(imgGray, imgSobel, CvType.CV_8U, 1, 0, 3, 1, 0, Core.BORDER_DEFAULT);
 		Imgproc.threshold(imgSobel, imgThreshold, 0, 255, Imgproc.THRESH_OTSU
 				+ Imgproc.THRESH_BINARY);
-		element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(
-				width, height));
-		Imgproc.morphologyEx(imgThreshold, imgThreshold, Imgproc.MORPH_CLOSE,
-				element);
+		element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(width, height));
+		Imgproc.morphologyEx(imgThreshold, imgThreshold, Imgproc.MORPH_CLOSE, element);
 		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
 		Imgproc.findContours(imgThreshold, contours, hierarchy, 0, 1);
 
@@ -97,6 +89,41 @@ public class TextBlocksMarker {
 
 		return boundRect;
 	}
+	
+	public BufferedImage transform() {
+		
+		List<Rect> boundRect = new ArrayList<>();
+		Mat imgGray = new Mat();
+		Mat imgSobel = new Mat();
+		Mat imgThreshold = new Mat();
+		Mat element = new Mat();
+		
+		List<Rect> boxes = new ArrayList<>();
+		Mat mat = matify(image);
+		
+		Imgproc.cvtColor(mat, imgGray, Imgproc.COLOR_RGB2GRAY);
+		Imgproc.Sobel(imgGray, imgSobel, CvType.CV_8U, 1, 0, 3, 1, 0, Core.BORDER_DEFAULT);
+		Imgproc.threshold(imgSobel, imgThreshold, 0, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
+		element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(width, height));
+		Imgproc.morphologyEx(imgThreshold, imgThreshold, Imgproc.MORPH_CLOSE, element);
+		
+		return demat(mat);
+	}
+	
+	private BufferedImage demat(Mat mat) {
+		byte[] data = new byte[mat.rows()*mat.cols()*(int)(mat.elemSize())];
+		mat.get(0, 0, data);
+		if (mat.channels() == 3) {
+		 for (int i = 0; i < data.length; i += 3) {
+		  byte temp = data[i];
+		  data[i] = data[i + 2];
+		  data[i + 2] = temp;
+		 }
+		}
+		BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
+		image.getRaster().setDataElements(0, 0, mat.cols(), mat.rows(), data);
+		return image;
+	}
 
 	private void markImage(List<Rect> rect) {
 		Graphics2D g = image.createGraphics();
@@ -106,6 +133,7 @@ public class TextBlocksMarker {
 			g.drawRect(r.x, r.y, r.width, r.height);
 
 		g.dispose();
+		
 	}
 
 	public static BufferedImage toBufferedImageOfType(BufferedImage original,
@@ -130,6 +158,5 @@ public class TextBlocksMarker {
 		}
 
 		return image;
-	}
-
+	}	
 }

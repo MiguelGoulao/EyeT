@@ -39,7 +39,6 @@ public class ActionToolBar extends JToolBar implements ActionListener{
 		recordButton = new JButton();
 		stopButton = new JButton();
 		
-		
 		try {
 			
 			recordImage = ImageIO.read(getClass().getResource("/resources/Record-32.png"));
@@ -76,17 +75,17 @@ public class ActionToolBar extends JToolBar implements ActionListener{
 	public void actionPerformed(ActionEvent event) {
 		if(event.getSource() == recordButton) {
 			if(controller.isCapturing()) {
-				controller.pauseRecording();
 				recordButton.setIcon(new ImageIcon(recordImage));
+				controller.pauseRecording();
 			}
 			else {
-				controller.startRecording();
 				recordButton.setIcon(new ImageIcon(pauseImage));
+				controller.startRecording();
 			}
 		}
 		else if(event.getSource() == stopButton) {
-			controller.endRecording();
 			recordButton.setIcon(new ImageIcon(recordImage));
+			controller.endRecording();
 		}
 	}
 }
