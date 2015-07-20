@@ -35,7 +35,11 @@ public class ScreenCaptureController {
 	private long pausedTime;
 
 	private String workingDirectory;
-
+	
+	// fields used in capturing screen
+	private Robot robot;
+	private Rectangle screenRect;
+	
 	public ScreenCaptureController(DataController gazeController,
 			MovieController movieController) {
 
@@ -43,6 +47,14 @@ public class ScreenCaptureController {
 		this.movieController = movieController;
 		this.imageEditor = new ImageEditor(gazeController);
 		this.paused = false;
+		
+		this.screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+		try {
+			this.robot = new Robot();
+		} catch (AWTException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		recording = false;
 		loadSettings();
@@ -75,15 +87,7 @@ public class ScreenCaptureController {
 	}
 
 	public BufferedImage captureScreen() {
-		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit()
-				.getScreenSize());
-		BufferedImage capture = null;
-		try {
-			capture = new Robot().createScreenCapture(screenRect);
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
-		return capture;
+		return robot.createScreenCapture(screenRect);
 	}
 
 	public void startRecording() {

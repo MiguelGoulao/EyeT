@@ -64,6 +64,8 @@ public class DataController {
 	}
 
 	private void addGazeToHistory(GazeData gaze) {
+		
+		
 		if (gazeHistory.size() == GAZES_NUMBER) {
 			if (!gaze.isFixated || nearTheLastFixated(gaze)) {
 				gazeHistory.remove(gazeHistory.size() - 1);
@@ -72,7 +74,11 @@ public class DataController {
 				fixationStart = gaze.timeStamp;
 			}
 		}
+		long startTime = System.nanoTime();
 		gazeHistory.add(gaze);
+		long endTime = System.nanoTime();
+
+		System.out.println( (endTime - startTime) / 1000000);
 		System.out.println("Added: " + gaze.smoothedCoordinates.x + " "
 				+ gaze.smoothedCoordinates.y);
 	}
