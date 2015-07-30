@@ -92,13 +92,11 @@ public class TextBlocksMarker {
 	
 	public BufferedImage transform() {
 		
-		List<Rect> boundRect = new ArrayList<>();
 		Mat imgGray = new Mat();
 		Mat imgSobel = new Mat();
 		Mat imgThreshold = new Mat();
 		Mat element = new Mat();
-		
-		List<Rect> boxes = new ArrayList<>();
+
 		Mat mat = matify(image);
 		
 		Imgproc.cvtColor(mat, imgGray, Imgproc.COLOR_RGB2GRAY);
@@ -107,18 +105,20 @@ public class TextBlocksMarker {
 		element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(width, height));
 		Imgproc.morphologyEx(imgThreshold, imgThreshold, Imgproc.MORPH_CLOSE, element);
 		
-		return demat(mat);
+		return demat(imgSobel);
 	}
 	
 	private BufferedImage demat(Mat mat) {
-		byte[] data = new byte[mat.rows()*mat.cols()*(int)(mat.elemSize())];
+		Imgproc.cvtColor(mat, mat, Imgproc.COLOR_GRAY2BGR);
+		int dataSize = mat.rows() * mat.cols() * 3;
+		byte[] data = new byte[dataSize];
 		mat.get(0, 0, data);
 		if (mat.channels() == 3) {
-		 for (int i = 0; i < data.length; i += 3) {
-		  byte temp = data[i];
-		  data[i] = data[i + 2];
-		  data[i + 2] = temp;
-		 }
+			 for (int i = 0; i < data.length; i += 3) {
+				  byte temp = data[i];
+				  data[i] = data[i + 2];
+				  data[i + 2] = temp;
+			 }
 		}
 		BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
 		image.getRaster().setDataElements(0, 0, mat.cols(), mat.rows(), data);
