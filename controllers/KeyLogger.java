@@ -1,7 +1,6 @@
 package controllers;
 
 import java.util.LinkedList;
-import java.util.List;
 
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
