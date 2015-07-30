@@ -26,16 +26,8 @@ public class TextBlocksMarker {
 		height = h;
 	}
 	
-	public static TextBlocksMarker avgWordSize(BufferedImage source){
-		return new TextBlocksMarker(source, 5, 5);
-	}
-	
 	public static TextBlocksMarker sentenceSize(BufferedImage source){
 		return new TextBlocksMarker(source, 16, 1);
-	}
-
-	public static TextBlocksMarker smallWindowSize(BufferedImage source){
-		return new TextBlocksMarker(source, 14, 13);
 	}
 
 	public BufferedImage getMarkedImage() {
@@ -88,41 +80,6 @@ public class TextBlocksMarker {
 		}
 
 		return boundRect;
-	}
-	
-	public BufferedImage transform() {
-		
-		Mat imgGray = new Mat();
-		Mat imgSobel = new Mat();
-		Mat imgThreshold = new Mat();
-		Mat element = new Mat();
-
-		Mat mat = matify(image);
-		
-		Imgproc.cvtColor(mat, imgGray, Imgproc.COLOR_RGB2GRAY);
-		Imgproc.Sobel(imgGray, imgSobel, CvType.CV_8U, 1, 0, 3, 1, 0, Core.BORDER_DEFAULT);
-		Imgproc.threshold(imgSobel, imgThreshold, 0, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
-		element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(width, height));
-		Imgproc.morphologyEx(imgThreshold, imgThreshold, Imgproc.MORPH_CLOSE, element);
-		
-		return demat(imgSobel);
-	}
-	
-	private BufferedImage demat(Mat mat) {
-		Imgproc.cvtColor(mat, mat, Imgproc.COLOR_GRAY2BGR);
-		int dataSize = mat.rows() * mat.cols() * 3;
-		byte[] data = new byte[dataSize];
-		mat.get(0, 0, data);
-		if (mat.channels() == 3) {
-			 for (int i = 0; i < data.length; i += 3) {
-				  byte temp = data[i];
-				  data[i] = data[i + 2];
-				  data[i + 2] = temp;
-			 }
-		}
-		BufferedImage image = new BufferedImage(mat.cols(), mat.rows(), BufferedImage.TYPE_3BYTE_BGR);
-		image.getRaster().setDataElements(0, 0, mat.cols(), mat.rows(), data);
-		return image;
 	}
 
 	private void markImage(List<Rect> rect) {

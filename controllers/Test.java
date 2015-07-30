@@ -31,9 +31,7 @@ public class Test {
 		BufferedImage customImg = TextBlocksMarker.toBufferedImageOfType(img,
 				BufferedImage.TYPE_3BYTE_BGR);
 
-//		TextBlocksMarker detection = TextBlocksMarker.avgWordSize(customImg);
 		TextBlocksMarker detection = TextBlocksMarker.sentenceSize(customImg);
-//		TextBlocksMarker detection = TextBlocksMarker.smallWindowSize(customImg);
 		
 		Tesseract instance = new Tesseract(); // JNA Interface Mapping
 //        Tesseract1 instance = new Tesseract1(); // JNA Direct Mapping
