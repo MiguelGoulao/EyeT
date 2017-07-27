@@ -18,7 +18,7 @@ public class KeyLogger implements NativeKeyListener, NativeMouseInputListener{
 		numOfButtonsPressed = 0;
 		
 		lastOperations = new LinkedList<>();
-		registerNativeHook();
+	//	registerNativeHook();
 		
 	}
 	

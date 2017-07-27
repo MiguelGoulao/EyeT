@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
+import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -22,11 +23,12 @@ import views.MainFrame;
 import views.TopMenu;
 
 public class ScreenCaptureController {
-	
+
 	private MainFrame mainFrame;
 	private boolean recording;
 	private DataController gazeController;
 	private MovieController movieController;
+	private AudioController audioController;
 	private ImageEditor imageEditor;
 
 	private CaptureLoop captureLoop;
@@ -35,19 +37,20 @@ public class ScreenCaptureController {
 	private long pausedTime;
 
 	private String workingDirectory;
-	
+
 	// fields used in capturing screen
 	private Robot robot;
 	private Rectangle screenRect;
-	
-	public ScreenCaptureController(DataController gazeController,
-			MovieController movieController) {
+
+	public ScreenCaptureController(DataController gazeController, MovieController movieController,
+			AudioController audioController) {
 
 		this.gazeController = gazeController;
 		this.movieController = movieController;
+		this.audioController = audioController;
 		this.imageEditor = new ImageEditor(gazeController);
 		this.paused = false;
-		
+
 		this.screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
 		try {
 			this.robot = new Robot();
@@ -55,12 +58,12 @@ public class ScreenCaptureController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		recording = false;
 		loadSettings();
-		
+
 		buildWindows();
-		
+
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
@@ -68,20 +71,20 @@ public class ScreenCaptureController {
 			}
 		});
 	}
-	
+
 	private void buildWindows() {
 		this.mainFrame = new MainFrame();
-		
+
 		TopMenu topMenu = new TopMenu(this);
 		mainFrame.add(topMenu, BorderLayout.NORTH);
-		
+
 		JPanel middlePanel = new JPanel();
 		middlePanel.setLayout(new BorderLayout());
 		mainFrame.add(middlePanel, BorderLayout.CENTER);
-		
+
 		ActionToolBar toolbar = new ActionToolBar(this);
 		middlePanel.add(toolbar, BorderLayout.NORTH);
-		
+
 		mainFrame.setVisible(true);
 		mainFrame.pack();
 	}
@@ -95,27 +98,38 @@ public class ScreenCaptureController {
 			if (!paused) {
 				pausedTime = 0;
 				String currentTime = getCurrentTime();
-				
-				if(workingDirectory == null){
+
+				if (workingDirectory == null) {
 					movieController.startRecording(currentTime);
+					audioController.setFilename(currentTime);
 					gazeController.startRecording(currentTime);
-				}
-				else {
+				} else {
 					movieController.startRecording(workingDirectory + "\\" + currentTime);
-					gazeController.startRecording(workingDirectory + "\\"  + currentTime);
+					audioController.setFilename(workingDirectory + "\\" + currentTime);
+					gazeController.startRecording(workingDirectory + "\\" + currentTime);
 				}
-				
+
 			} else {
 				pausedTime += System.nanoTime() - pauseStart;
 				gazeController.pauseRecording();
 				paused = false;
-				
+
 			}
 
 			recording = true;
 
-			captureLoop = new CaptureLoop(); 
+			captureLoop = new CaptureLoop();
+		
 			captureLoop.start();
+
+			try {
+				recordThread.start();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+				
+				System.out.println("Problem with sound recording");
+			}
 
 		}
 	}
@@ -140,8 +154,13 @@ public class ScreenCaptureController {
 				e.printStackTrace();
 			}
 
-			movieController.endRecording();
+			audioController.stop();
+			audioController.save();
+			
+			movieController.endRecording();			
+
 			gazeController.endRecording();
+			
 		}
 	}
 
@@ -158,7 +177,19 @@ public class ScreenCaptureController {
 			}
 		}
 	}
+	
+	Thread recordThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                audioController.start();
+            } catch (LineUnavailableException ex) {
+            	System.out.println("cant record audio");
+            }              
+        }
+    });
 
+	
 	private String getCurrentTime() {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy MM dd HH'h'mm'm'ss's'");
 		Date date = new Date();
@@ -182,40 +213,39 @@ public class ScreenCaptureController {
 		this.workingDirectory = workingDirectory;
 		saveSettings();
 	}
-	
+
 	public void badDirectory() {
 		JOptionPane.showMessageDialog(mainFrame, "You have no authorization to write in this location");
 	}
-	
+
 	public void loadSettings() {
 		File file = new File("settings.txt");
-		
-		if(file.exists() && ! file.isDirectory()) {
+
+		if (file.exists() && !file.isDirectory()) {
 			try {
 				Scanner scanner = new Scanner(file);
-				while(scanner.hasNext()) {
-					if(scanner.next().equals("workingDirectory")) {
+				while (scanner.hasNext()) {
+					if (scanner.next().equals("workingDirectory")) {
 						scanner.next();
 						workingDirectory = scanner.nextLine();
 						workingDirectory = workingDirectory.trim();
 					}
 				}
 				scanner.close();
-				
+
 			} catch (IOException e) {
 				e.printStackTrace();
-			}	
+			}
 		}
 	}
 
 	public void saveSettings() {
 		File file = new File("settings.txt");
-		try{
+		try {
 			FileWriter fw = new FileWriter(file, false);
 			fw.write("workingDirectory = " + workingDirectory);
 			fw.close();
-		}
-		catch( IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -223,7 +253,8 @@ public class ScreenCaptureController {
 	public static void main(String args[]) {
 		DataController gc = new DataController();
 		MovieController mc = new MovieController();
-		ScreenCaptureController scc = new ScreenCaptureController(gc, mc);
+		AudioController ac = new AudioController();
+		ScreenCaptureController scc = new ScreenCaptureController(gc, mc, ac);
 	}
 
 }

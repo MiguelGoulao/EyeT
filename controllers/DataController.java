@@ -75,7 +75,7 @@ public class DataController {
 		gazeHistory.add(gaze);
 		long endTime = System.nanoTime();
 
-		System.out.println( (endTime - startTime) / 1000000);
+		//System.out.println( (endTime - startTime) / 1000000);
 		System.out.println("Added: " + gaze.smoothedCoordinates.x + " "
 				+ gaze.smoothedCoordinates.y);
 	}
@@ -134,9 +134,9 @@ public class DataController {
 
 	long lastFixationLength() {
 		GazeData last = getLatest();
-		if (last.isFixated) {
-			return System.currentTimeMillis() - fixationStart;
-		} else
+		if (last != null&& last.isFixated && fixationStart != 0)
+			return last.timeStamp - fixationStart;
+		 else
 			return 0;
 	}
 
@@ -171,8 +171,15 @@ public class DataController {
 			outputFileWriter.append(';');
 			outputFileWriter.append("Mouse y");
 			outputFileWriter.append(';');
-			outputFileWriter.append("Keyboard and mouse events");
+			outputFileWriter.append("Fixation Duration");
 			outputFileWriter.append(';');
+			outputFileWriter.append("is Fixated");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Left Pupil Diameter");
+			outputFileWriter.append(';');
+			outputFileWriter.append("Right Pupil Diameter");
+			outputFileWriter.append(';');
+			
 			outputFileWriter.append('\n');
 
 			recording = true;
@@ -182,11 +189,14 @@ public class DataController {
 	}
 
 	private void saveData(GazeData gazeData) {
-		if (isLooking(gazeData))
+		boolean isLooking = isLooking(gazeData);
+		
+		if (isLooking)
 			addGazeToHistory(gazeData);
-		else
+		else{
 			gazeHistory.clear();
-
+			fixationStart =0;
+		}
 		try {
 			outputFileWriter.append(gazeData.timeStampString);
 			outputFileWriter.append(';');
@@ -201,6 +211,14 @@ public class DataController {
 			outputFileWriter.append(';');
 			outputFileWriter.append(Integer.toString(MouseInfo.getPointerInfo()
 					.getLocation().y));
+			outputFileWriter.append(';');
+			outputFileWriter.append(lastFixationLength() + "");
+			outputFileWriter.append(';');
+			outputFileWriter.append("" + gazeData.isFixated);
+			outputFileWriter.append(';');
+			outputFileWriter.append("" + gazeData.leftEye.pupilSize);
+			outputFileWriter.append(';');
+			outputFileWriter.append("" + gazeData.rightEye.pupilSize);
 			outputFileWriter.append(';');
 			saveKeyLoggerData();
 			outputFileWriter.append('\n');
